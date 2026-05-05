@@ -329,17 +329,17 @@
     <section id="diagnosis" class="section" style="padding-top:26px">
       <div class="section-head">
         <div>
-          <div class="label">Interactive Diagnosis</div>
-          <h2>운영 형태와 업종에 맞춰<br>결과가 바뀌는 진단 구조</h2>
+          <div class="label">맞춤형 마케팅 진단</div>
+          <h2>사업 유형에 맞춰<br>결과가 달라지는 진단</h2>
         </div>
-        <p>사업 기본 정보도 실제 결과에 반영되도록 수정했습니다. 업종, 운영 형태, 고객층, 판매 채널을 바꾸면 진단 유형과 실행안, KPI가 함께 달라집니다.</p>
+        <p>업종, 운영 형태, 운영 기간, 고객층, 판매 채널을 함께 반영해 현재 상황에 맞는 진단 유형과 실행안, KPI를 제안합니다.</p>
       </div>
 
       <div class="demo-grid">
         <div>
           <div class="card panel">
             <h3>1. 사업 기본 정보</h3>
-            <p class="panel-desc">업종, 운영 형태, 고객층, 판매 채널이 진단 결과와 실행안에 직접 반영됩니다.</p>
+            <p class="panel-desc">업종, 운영 형태, 운영 기간, 고객층, 판매 채널이 진단 결과와 실행안에 직접 반영됩니다.</p>
 
             <div class="group">
               <div class="choice-label">업종</div>
@@ -583,6 +583,153 @@
       }
     };
 
+    const operationGuides = {
+      "오프라인": {
+        focus:"현장 유입과 상권 반응",
+        insight:"오프라인형은 입지, 간판, 외관, 동선, 지도 노출이 첫 방문을 좌우합니다. 현장에서 바로 인지되고 다시 방문할 이유가 보이는지부터 점검해야 합니다.",
+        kpis:["지도 길찾기 수","입구 유입 체감","현장 방문 문의 수","재방문 쿠폰 사용 수","피크 시간대 매출 비중","월 리뷰 수"],
+        typeActions:{
+          "현장 유입 보강형":"간판, 입구 안내물, 대표 상품 노출을 같은 메시지로 맞춰 지나가는 고객이 바로 이해하게 만드세요.",
+          "상권 노출 개선형":"지도, 외관, 입구 안내를 함께 정비해 주변 상권에서 발견되는 지점을 늘리세요.",
+          default:"현장 첫인상, 방문 동선, 재방문 장치를 한 번에 점검하세요."
+        }
+      },
+      "온라인": {
+        focus:"채널 운영과 문의 전환",
+        insight:"온라인형은 콘텐츠, 상세 설명, 후기, 문의 응답, 클릭·저장 지표가 성과를 만듭니다. 노출보다 문의와 구매로 이어지는 흐름을 더 선명하게 봐야 합니다.",
+        kpis:["콘텐츠 저장 수","문의 전환율","상세 페이지 클릭 수","후기 노출 수","채널별 응답 시간","주간 콘텐츠 발행 수"],
+        typeActions:{
+          "온라인 채널 정비형":"핵심 채널을 1~2개로 줄이고 콘텐츠 주제, 업로드 주기, 문의 응답 기준을 고정하세요.",
+          "신규 유입 강화형":"저장, 클릭, 문의를 유도하는 콘텐츠 문구와 대표 이미지를 먼저 정비하세요.",
+          default:"콘텐츠 노출, 상세 설명, 문의 전환 흐름을 한 화면에서 이어지게 만드세요."
+        }
+      },
+      "혼합": {
+        focus:"현장성과 온라인 채널의 연결",
+        insight:"혼합형은 현장에서 느끼는 강점과 온라인에서 보이는 이미지가 이어져야 합니다. 매장 경험, 지도·플레이스, SNS·후기가 같은 메시지를 말하는지 확인해야 합니다.",
+        kpis:["지도 저장 수","매장 방문 전환 수","콘텐츠 저장 수","월 리뷰 수","재방문 혜택 사용 수","온라인 문의 수"],
+        typeActions:{
+          "현장 보강형":"온라인에서 기대한 이미지와 현장 입구, 진열, 안내 문구가 이어지도록 정리하세요.",
+          "채널 보강형":"현장에서 잘 팔리는 상품과 고객 반응을 온라인 콘텐츠와 후기 요청으로 연결하세요.",
+          default:"현장 메시지와 온라인 콘텐츠를 같은 대표 상품과 후기 포인트로 묶으세요."
+        }
+      }
+    };
+
+    const stageGuides = {
+      "6개월 미만": {
+        focus:"대표 메시지 검증",
+        insight:"운영 초기에는 많은 기능보다 한 문장으로 기억되는 강점과 첫 고객 반응을 빠르게 고정하는 것이 중요합니다.",
+        kpis:["첫 방문 고객 수","대표 메시지 반응","초기 리뷰 수"]
+      },
+      "6개월~1년": {
+        focus:"반복 운영 기준 정리",
+        insight:"정착기에는 잘 되는 채널과 상품을 골라 반복 가능한 운영 기준으로 만드는 것이 필요합니다.",
+        kpis:["주간 문의 수","반복 구매/방문 수","채널별 반응률"]
+      },
+      "1~3년": {
+        focus:"성과가 나는 구간 확대",
+        insight:"성장기에는 이미 반응이 있는 상품, 시간대, 채널을 찾아 더 크게 키우는 방식이 효과적입니다.",
+        kpis:["전환율","재방문 비중","대표 상품 판매 비중"]
+      },
+      "3년 이상": {
+        focus:"단골 유지와 브랜드 고도화",
+        insight:"운영 경험이 쌓인 단계에서는 기존 고객 관리, 브랜드 일관성, 고정 지표 관리가 성과를 더 안정적으로 만듭니다.",
+        kpis:["단골 고객 비중","재방문 주기","브랜드 검색 수"]
+      }
+    };
+
+    const customerGuides = {
+      "10대": {
+        focus:"짧은 콘텐츠 반응",
+        insight:"10대 고객은 짧고 직관적인 이미지, 공유하기 쉬운 콘텐츠, 가격·이벤트 신호에 빠르게 반응합니다.",
+        kpis:["숏폼 반응 수","이벤트 참여 수","저장/공유 수"]
+      },
+      "20대": {
+        focus:"저장과 리뷰 확산",
+        insight:"20대 고객은 분위기, 사진, 후기, 저장할 만한 포인트에 민감하므로 온라인 이미지와 현장 경험이 함께 중요합니다.",
+        kpis:["SNS 저장 수","사진 리뷰 수","플레이스 저장 수"]
+      },
+      "30대": {
+        focus:"비교 후 선택",
+        insight:"30대 고객은 가격, 품질, 후기, 편의성을 비교한 뒤 선택하는 경향이 있어 설득 정보가 정리되어야 합니다.",
+        kpis:["상세 정보 클릭 수","문의 전환율","후기 확인 후 구매 수"]
+      },
+      "40대": {
+        focus:"신뢰와 재방문",
+        insight:"40대 고객은 신뢰, 안정감, 편의성을 중시하므로 응대 품질과 재방문 장치를 함께 봐야 합니다.",
+        kpis:["전화/상담 문의 수","재방문 쿠폰 사용 수","만족 후기 수"]
+      },
+      "50대 이상": {
+        focus:"현장 접근성과 설명",
+        insight:"50대 이상 고객은 위치 인지, 전화 문의, 현장 안내, 쉬운 설명의 영향이 커서 오프라인 접점 관리가 중요합니다.",
+        kpis:["전화 문의 수","길찾기 수","현장 재방문 수"]
+      },
+      "다양함": {
+        focus:"고객군별 메시지 분리",
+        insight:"고객층이 넓다면 하나의 문구로 모두를 설득하기보다 핵심 고객군별 메시지를 나눠 테스트하는 편이 안전합니다.",
+        kpis:["고객군별 반응률","채널별 문의 수","대표 상품별 전환율"]
+      }
+    };
+
+    const channelGuides = {
+      "현장 방문": {
+        focus:"매장 입구와 현장 구매 흐름",
+        insight:"현장 방문 중심이라면 간판, 외관, 동선, 현장 안내 문구가 곧 마케팅 채널입니다.",
+        kpis:["현장 방문 문의 수","입구 유입 체감","피크 시간대 매출"]
+      },
+      "배달": {
+        focus:"대표 메뉴와 주문 전환",
+        insight:"배달 중심이라면 대표 메뉴 사진, 후기, 배달앱 상세 설명, 재주문 혜택이 전환에 직접 영향을 줍니다.",
+        kpis:["배달 주문 전환율","대표 메뉴 주문 비중","재주문 수"]
+      },
+      "SNS/DM": {
+        focus:"콘텐츠 저장과 빠른 응답",
+        insight:"SNS/DM 중심이라면 콘텐츠 저장, 문의 응답 속도, 후기 재활용이 실제 전환 흐름을 만듭니다.",
+        kpis:["DM 문의 수","콘텐츠 저장 수","응답 완료 시간"]
+      },
+      "스마트스토어": {
+        focus:"상세 설명과 구매 전환",
+        insight:"스마트스토어 중심이라면 상세 페이지, 옵션 설명, 리뷰, 장바구니 이후 전환율을 우선 봐야 합니다.",
+        kpis:["상세 페이지 클릭 수","장바구니 전환율","구매 리뷰 수"]
+      },
+      "플레이스/지도": {
+        focus:"검색 노출과 저장",
+        insight:"플레이스와 지도 중심이라면 검색 키워드, 사진, 리뷰, 길찾기, 저장 수가 신규 유입의 핵심 신호입니다.",
+        kpis:["플레이스 저장 수","길찾기 수","검색 노출 후 방문 수"]
+      },
+      "혼합": {
+        focus:"채널 간 메시지 통일",
+        insight:"혼합 채널이라면 고객이 어디서 보든 대표 상품, 후기, 혜택이 같은 흐름으로 보여야 합니다.",
+        kpis:["채널별 문의 수","온·오프 전환 수","대표 메시지 반응률"]
+      }
+    };
+
+    const typeActions = {
+      "현장 유입 보강형":"현장 첫인상과 상권 노출을 먼저 정비해 지나가는 고객이 매장을 바로 인지하게 만드세요.",
+      "온라인 채널 정비형":"온라인 채널을 줄이고 콘텐츠, 후기, 문의 응답 기준을 명확히 정하세요.",
+      "현장 보강형":"온라인에서 기대한 이미지가 실제 매장 입구와 내부 경험에서도 이어지게 만드세요.",
+      "채널 보강형":"현장에서 팔리는 이유를 온라인 콘텐츠와 후기 문구로 바꿔 노출하세요.",
+      "상권 노출 개선형":"지도, 외관, 간판, 대표 상품 노출을 함께 정리해 주변 고객의 발견 가능성을 높이세요.",
+      "신규 유입 강화형":"검색, 저장, 공유를 부르는 대표 이미지와 소개 문구를 먼저 정비하세요.",
+      "전환 개선형":"대표 상품, 가격, 후기 포인트를 한눈에 보이게 정리해 선택을 쉽게 만드세요.",
+      "단골 확보형":"재방문 혜택과 리뷰 요청 흐름을 정해 한 번 온 고객이 다시 올 이유를 만드세요.",
+      "재방문 관리형":"방문 후 메시지, 혜택, 후기 요청을 표준화해 재이용 흐름을 관리하세요.",
+      "브랜드 정비형":"사진, 소개글, 후기, 안내 문구의 톤을 맞춰 매장의 차별점을 반복해서 보여주세요.",
+      "균형 운영형":"강한 영역은 유지하고 약한 지표 하나를 골라 다음 주 실행 항목으로 좁히세요."
+    };
+
+    function uniqueItems(items){
+      return [...new Set(items.filter(Boolean))];
+    }
+
+    function makeProfileAction(){
+      const customer = customerGuides[profile.customerGroup];
+      const channel = channelGuides[profile.salesChannel];
+      const operation = operationGuides[profile.operationType];
+      return `${profile.businessYear} 단계에서는 ${customer.focus}에 맞춘 ${channel.focus}을 우선 실험하고, ${operation.focus} 지표를 주간으로 확인하세요.`;
+    }
+
     function average(arr){
       const values = arr.filter(v => typeof v === "number" && !Number.isNaN(v));
       if (!values.length) return 0;
@@ -607,7 +754,7 @@
       ].sort((a,b)=>a[1]-b[1])[0];
     }
 
-    function pickType(scores){
+    function pickBaseType(scores){
       const weakest = getWeakestArea(scores)[0];
 
       if(profile.operationType === "오프라인" && scores.offline < 58) return "현장 유입 보강형";
@@ -628,6 +775,32 @@
       return "균형 운영형";
     }
 
+    function formatResultType(baseType){
+      const stageLabels = {
+        "6개월 미만":"초기",
+        "6개월~1년":"정착기",
+        "1~3년":"성장기",
+        "3년 이상":"고도화"
+      };
+      const customerLabels = {
+        "10대":"10대",
+        "20대":"20대",
+        "30대":"30대",
+        "40대":"40대",
+        "50대 이상":"50대+",
+        "다양함":"전연령"
+      };
+      const channelLabels = {
+        "현장 방문":"현장",
+        "배달":"배달",
+        "SNS/DM":"SNS",
+        "스마트스토어":"스토어",
+        "플레이스/지도":"지도",
+        "혼합":"온·오프"
+      };
+      return `${stageLabels[profile.businessYear]} ${customerLabels[profile.customerGroup]} ${profile.industry} ${channelLabels[profile.salesChannel]} ${baseType}`;
+    }
+
     function scoreByProfile(baseScores){
       let acquisition = baseScores.acquisition;
       let conversion = baseScores.conversion;
@@ -637,43 +810,50 @@
       let online = baseScores.online;
 
       if(profile.businessYear === "6개월 미만"){
-        branding -= 6; retention -= 5; acquisition -= 3;
+        branding -= 10; retention -= 8; acquisition -= 6; conversion -= 3;
       } else if(profile.businessYear === "6개월~1년"){
-        branding -= 3; retention -= 2;
+        branding -= 6; retention -= 4; acquisition -= 2;
+      } else if(profile.businessYear === "1~3년"){
+        conversion += 3; retention += 2;
       } else if(profile.businessYear === "3년 이상"){
-        branding += 2;
+        branding += 5; retention += 5; conversion += 2;
       }
 
       if(profile.operationType === "오프라인"){
-        offline += 6; online -= 5;
+        offline += 10; online -= 9; retention += 3; acquisition += 2;
       } else if(profile.operationType === "온라인"){
-        online += 6; offline -= 6;
+        online += 10; offline -= 9; conversion += 4; acquisition += 3;
       } else {
-        offline += 2; online += 2;
+        offline += 4; online += 4; branding += 2;
       }
 
       if(profile.salesChannel === "현장 방문"){
-        offline += 6; online -= 4; conversion += 2;
+        offline += 10; online -= 7; retention += 3; conversion += 2;
       } else if(profile.salesChannel === "배달"){
-        online += 8; acquisition += 4; conversion += 3;
+        online += 11; acquisition += 5; conversion += 6; offline -= 3;
       } else if(profile.salesChannel === "SNS/DM"){
-        online += 7; acquisition += 5; branding += 3;
+        online += 10; acquisition += 8; branding += 5;
       } else if(profile.salesChannel === "스마트스토어"){
-        online += 8; conversion += 4; branding += 2;
+        online += 12; conversion += 7; branding += 3; offline -= 4;
       } else if(profile.salesChannel === "플레이스/지도"){
-        acquisition += 6; offline += 3; online += 2;
+        acquisition += 9; offline += 5; online += 3;
       } else if(profile.salesChannel === "혼합"){
-        acquisition += 2; conversion += 2; offline += 2; online += 2;
+        acquisition += 4; conversion += 4; offline += 4; online += 4; branding += 2;
       }
 
       if(profile.customerGroup === "10대" || profile.customerGroup === "20대"){
-        if(profile.operationType !== "오프라인") online += 4;
-        if(baseScores.branding < 65) branding -= 3;
+        if(profile.operationType !== "오프라인") online += 6;
+        if(baseScores.branding < 65) branding -= 5;
+        acquisition += 3;
       } else if(profile.customerGroup === "50대 이상"){
-        offline += 4; online -= 2;
-        if(baseScores.offline < 60) acquisition -= 3;
+        offline += 7; online -= 4; retention += 3;
+        if(baseScores.offline < 60) acquisition -= 5;
       } else if(profile.customerGroup === "40대"){
-        conversion += 2;
+        conversion += 4; retention += 2;
+      } else if(profile.customerGroup === "30대"){
+        conversion += 3; branding += 2;
+      } else if(profile.customerGroup === "다양함"){
+        acquisition += 2; branding -= 2;
       }
 
       if(profile.industry === "카페"){
@@ -702,80 +882,51 @@
       };
     }
 
-    function buildRecommendations(type, weakestName){
+    function buildRecommendations(baseType, weakestName){
       const profileInfo = industryMap[profile.industry] || industryMap["기타"];
-      const kpis = [...profileInfo.kpis];
-
-      let actions = [
-        "대표 상품 또는 대표 서비스를 중심으로 소개 메시지를 하나로 정리하세요.",
-        "고객이 자주 묻는 질문과 후기 포인트를 모아 핵심 설득 문구로 바꾸세요.",
-        "이번 주 안에 실행할 마케팅 행동 3개만 정해 체크하세요."
-      ];
-
-      if(type === "현장 유입 보강형" || type === "상권 노출 개선형" || type === "현장 보강형"){
-        actions = [
-          "간판, 입구, 외부 안내물, 대표 메뉴 노출 등 현장 첫인상 요소를 우선 점검하세요.",
-          "상권과 주 고객층의 적합도를 다시 보고 시간대별 집중 공략 전략을 정리하세요.",
-          "지나가는 고객이 매장을 바로 인지할 수 있게 외관 메시지를 선명하게 만드세요."
-        ];
-      } else if(type === "온라인 채널 정비형" || type === "채널 보강형" || type === "신규 유입 강화형"){
-        actions = [
-          "운영할 온라인 채널을 1~2개로 좁히고 업로드 기준을 주간 단위로 고정하세요.",
-          "대표 이미지, 후기, 저장 유도 문구를 채널별로 정리해 신뢰도를 높이세요.",
-          "조회수만 보지 말고 문의, 저장, 클릭 같은 행동지표를 함께 확인하세요."
-        ];
-      } else if(type === "전환 개선형"){
-        actions = [
-          "첫 방문 고객이 가장 쉽게 선택할 수 있는 대표 상품 1~2개를 전면에 배치하세요.",
-          "가격, 장점, 후기 포인트를 한눈에 보이게 정리해 구매 결정을 쉽게 만드세요.",
-          "문의 후 구매로 이어지지 않는 구간을 확인하고 혜택 또는 설득 문구를 보강하세요."
-        ];
-      } else if(type === "단골 확보형" || type === "재방문 관리형"){
-        actions = [
-          "쿠폰, 적립, 멤버십처럼 다시 오게 만드는 이유를 하나라도 설계하세요.",
-          "결제 후 리뷰 또는 재방문을 자연스럽게 요청하는 멘트를 통일해 사용하세요.",
-          "단골 고객이 자주 찾는 메뉴나 서비스 중심으로 재방문 메시지를 따로 운영하세요."
-        ];
-      } else if(type === "브랜드 정비형"){
-        actions = [
-          "우리 매장의 차별점과 톤을 한 문장으로 정의하고 모든 홍보물에 일관되게 반영하세요.",
-          "사진, 문구, 후기, 소개글의 분위기를 통일해 브랜드 인식을 분명하게 만드세요.",
-          "고객이 기억할 만한 대표 키워드 2~3개를 정하고 노출을 반복하세요."
-        ];
-      }
-
       const areaKey = weakestName === "유입" ? "acquisition" : weakestName === "전환" ? "conversion" : "retention";
       const add = (profileInfo.actionAddons && profileInfo.actionAddons[areaKey]) ? profileInfo.actionAddons[areaKey] : [];
-      actions = [actions[0], add[0] || actions[1], add[1] || actions[2]].slice(0,3);
+      const opGuide = operationGuides[profile.operationType];
+      const opAction = (opGuide.typeActions && (opGuide.typeActions[baseType] || opGuide.typeActions.default)) || "";
 
-      if(profile.operationType === "오프라인"){
-        return { actions, kpis: kpis.filter(k => !["저장 수","신상품 반응률","콘텐츠 반응률","SNS 반응 수"].includes(k)).slice(0,6) };
-      }
-      if(profile.operationType === "온라인"){
-        return { actions, kpis: kpis.filter(k => !["피크 시간대 매출 비중","테이블 회전율 체감"].includes(k)).slice(0,6) };
-      }
-      return { actions, kpis: kpis.slice(0,6) };
+      const actions = uniqueItems([
+        typeActions[baseType],
+        add[0],
+        opAction,
+        makeProfileAction(),
+        add[1]
+      ]).slice(0,3);
+
+      const kpis = uniqueItems([
+        ...channelGuides[profile.salesChannel].kpis,
+        ...operationGuides[profile.operationType].kpis,
+        ...stageGuides[profile.businessYear].kpis,
+        ...customerGuides[profile.customerGroup].kpis,
+        ...profileInfo.kpis
+      ]).slice(0,6);
+
+      return { actions, kpis };
     }
 
     function makeSummary(type, scores, weakest){
       const segment = profile.customerGroup === "다양함" ? "고객층이 비교적 넓은" : `${profile.customerGroup} 중심 고객을 상대하는`;
       const yearText = profile.businessYear === "6개월 미만" ? "초기 운영 단계의" : profile.businessYear === "3년 이상" ? "운영 경험이 쌓인" : "현재 운영 중인";
       const opText = profile.operationType === "오프라인" ? "오프라인형" : profile.operationType === "온라인" ? "온라인형" : "혼합형";
-      return `${yearText} ${opText} ${profile.industry} 매장 중 ${segment} 구조를 보면, 현재는 ${weakest[0]} 영역 보완이 가장 시급합니다. 현재 진단 유형은 ${type}입니다.`;
+      return `${yearText} ${opText} ${profile.industry} 매장에서 ${segment} 구조와 ${profile.salesChannel} 채널을 함께 보면, 현재는 ${weakest[0]} 영역 보완이 가장 시급합니다. 현재 진단 유형은 ${type}입니다.`;
     }
 
-    function makeInsight(type, scores, weakest){
+    function makeInsight(scores, weakest){
       const profileInfo = industryMap[profile.industry] || industryMap["기타"];
       const key = weakest[0] === "유입" ? "acquisition" : weakest[0] === "전환" ? "conversion" : "retention";
       let base = profileInfo.insights[key] || "현재는 약한 영역부터 우선 보완하는 것이 좋습니다.";
 
       const notes = [];
-      if(profile.salesChannel === "플레이스/지도") notes.push("플레이스와 지도 노출이 중요한 구조라 가시성과 리뷰 축적이 특히 중요합니다.");
-      if(profile.salesChannel === "SNS/DM") notes.push("SNS/DM 채널을 주로 쓰는 만큼 게시 빈도와 문의 응답 흐름이 결과에 크게 작용합니다.");
-      if(profile.salesChannel === "배달") notes.push("배달 채널 비중이 높다면 대표 메뉴와 후기, 주문 전환 구성이 더욱 중요합니다.");
+      notes.push(operationGuides[profile.operationType].insight);
+      notes.push(stageGuides[profile.businessYear].insight);
+      notes.push(customerGuides[profile.customerGroup].insight);
+      notes.push(channelGuides[profile.salesChannel].insight);
       if(profile.operationType !== "온라인" && scores.offline < 60) notes.push("현장·상권 점수가 낮아 외관, 위치 인지, 시간대 전략을 먼저 정비할 필요가 있습니다.");
       if(profile.operationType !== "오프라인" && scores.online < 60) notes.push("온라인 채널 점수가 낮아 콘텐츠 구조와 성과 추적 체계를 함께 정리해야 합니다.");
-      if(profile.businessYear === "6개월 미만") notes.push("초기 운영 단계인 만큼 차별점과 대표 메시지를 더 빨리 고정하는 것이 중요합니다.");
 
       return base + " " + notes.join(" ");
     }
@@ -893,10 +1044,11 @@
         ["브랜딩", scores.branding]
       ].sort((a,b)=>b[1]-a[1])[0];
 
-      const type = pickType(scores);
-      const rec = buildRecommendations(type, weakest[0]);
+      const baseType = pickBaseType(scores);
+      const type = formatResultType(baseType);
+      const rec = buildRecommendations(baseType, weakest[0]);
       const summary = makeSummary(type, scores, weakest);
-      const insight = makeInsight(type, scores, weakest);
+      const insight = makeInsight(scores, weakest);
 
       document.getElementById("heroType").textContent = type;
       document.getElementById("heroSummary").textContent = summary;
@@ -909,7 +1061,7 @@
       document.getElementById("resultSummary").textContent = summary;
       document.getElementById("resultScore").textContent = scores.overall;
       document.getElementById("resultInsight").textContent = insight;
-      document.getElementById("resultSegment").textContent = `${profile.customerGroup} 중심 · ${profile.salesChannel} 중심 · ${profile.industry}`;
+      document.getElementById("resultSegment").textContent = `${profile.businessYear} · ${profile.operationType} · ${profile.customerGroup} · ${profile.salesChannel} · ${profile.industry}`;
 
       const map = {
         Acquisition: scores.acquisition,
@@ -943,7 +1095,7 @@
       rec.kpis.forEach(kpi => {
         const card = document.createElement("div");
         card.className = "kpi-card";
-        card.innerHTML = `<div class="name">${kpi}</div><div class="desc">현재 선택한 업종과 운영 형태를 기준으로 우선 추적하기 좋은 지표</div>`;
+        card.innerHTML = `<div class="name">${kpi}</div><div class="desc">지금 선택한 조건에서 먼저 볼 지표</div>`;
         kpiBox.appendChild(card);
       });
     }
