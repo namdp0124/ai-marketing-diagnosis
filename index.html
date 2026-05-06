@@ -178,6 +178,25 @@
     .scale-btn .n{font-size:15px;color:#111827;font-weight:900}
     .scale-btn.active{background:#111827;border-color:#111827;color:#fff}
     .scale-btn.active .n{color:#fff}
+    .field-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+    .field{display:flex;flex-direction:column;gap:8px}
+    .field.full{grid-column:1 / -1}
+    .field label{font-size:13px;font-weight:900;color:#334155}
+    .field input,.field textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fff;
+      color:#0f172a;
+      font:inherit;
+      font-size:14px;
+      line-height:1.6;
+      padding:12px 14px;
+      outline:none;
+    }
+    .field textarea{min-height:86px;resize:vertical}
+    .field input:focus,.field textarea:focus{border-color:#111827;box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+    .field input::placeholder,.field textarea::placeholder{color:#94a3b8}
     .result-top{
       display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
     }
@@ -258,7 +277,8 @@
       color:#334155;
     }
     @media (max-width:1080px){
-      .hero,.demo-grid,.feature-grid,.stats,.preview-grid,.kpi-grid{grid-template-columns:1fr}
+      .hero,.demo-grid,.feature-grid,.stats,.preview-grid,.kpi-grid,.field-grid{grid-template-columns:1fr}
+      .field.full{grid-column:auto}
       h1{font-size:40px}
       .section-head{display:block}
       .section-head h2{font-size:30px}
@@ -384,19 +404,50 @@
           </div>
 
           <div class="card panel" style="margin-top:18px">
-            <div class="group-title">2. 공통 마케팅 진단</div>
+            <h3>2. 매장 상황 입력</h3>
+            <p class="panel-desc">비워도 진단은 가능하지만, 여기를 채우면 AI가 훨씬 더 구체적인 지역 전략을 만듭니다.</p>
+            <div class="field-grid">
+              <div class="field">
+                <label for="contextProduct">대표 상품/서비스</label>
+                <input id="contextProduct" type="text" placeholder="예: 아인슈페너, 점심 백반, 속눈썹 펌" />
+              </div>
+              <div class="field">
+                <label for="contextStrength">매장 강점</label>
+                <input id="contextStrength" type="text" placeholder="예: 조용한 분위기, 빠른 응대, 재료 신선도" />
+              </div>
+              <div class="field full">
+                <label for="contextProblem">지금 가장 답답한 문제</label>
+                <textarea id="contextProblem" placeholder="예: 플레이스 조회는 있는데 방문이 적음, SNS 반응은 있는데 문의가 안 옴"></textarea>
+              </div>
+              <div class="field">
+                <label for="contextCompetitor">주변 경쟁 느낌</label>
+                <input id="contextCompetitor" type="text" placeholder="예: 감성 카페가 많음, 저가 음식점이 많음" />
+              </div>
+              <div class="field">
+                <label for="contextPromotion">현재 홍보 방식</label>
+                <input id="contextPromotion" type="text" placeholder="예: 인스타 게시물, 네이버 플레이스, 전단지" />
+              </div>
+              <div class="field full">
+                <label for="contextGoal">이번 달 목표</label>
+                <input id="contextGoal" type="text" placeholder="예: 평일 오후 방문 늘리기, 예약 문의 늘리기, 리뷰 20개 확보" />
+              </div>
+            </div>
+          </div>
+
+          <div class="card panel" style="margin-top:18px">
+            <div class="group-title">3. 공통 마케팅 진단</div>
             <div class="group-sub">유입, 전환, 재방문, 브랜딩 관점의 핵심 문항입니다.</div>
             <div id="commonQuestions"></div>
           </div>
 
           <div class="card panel" style="margin-top:18px">
-            <div id="trackTitle" class="group-title">3. 혼합 운영 진단</div>
+            <div id="trackTitle" class="group-title">4. 혼합 운영 진단</div>
             <div id="trackSub" class="group-sub">오프라인 현장성과 온라인 채널 운영을 함께 체크합니다.</div>
             <div id="trackQuestions"></div>
           </div>
 
           <div class="card panel" style="margin-top:18px">
-            <div class="group-title">4. 상권 자가진단</div>
+            <div class="group-title">5. 상권 자가진단</div>
             <div class="group-sub">상권 적합성, 경쟁 강도, 가시성, 확장 수요를 함께 반영합니다.</div>
             <div id="areaQuestions"></div>
           </div>
@@ -1106,13 +1157,13 @@
       box.innerHTML = "";
 
       if(profile.operationType === "오프라인"){
-        title.textContent = "3. 오프라인 현장 진단";
+        title.textContent = "4. 오프라인 현장 진단";
         sub.textContent = "입지, 외관, 동선, 현장 구매 흐름을 중심으로 봅니다.";
       } else if(profile.operationType === "온라인"){
-        title.textContent = "3. 온라인 채널 진단";
+        title.textContent = "4. 온라인 채널 진단";
         sub.textContent = "채널 운영, 콘텐츠, 후기, 반응 추적 구조를 중심으로 봅니다.";
       } else {
-        title.textContent = "3. 혼합 운영 진단";
+        title.textContent = "4. 혼합 운영 진단";
         sub.textContent = "오프라인 현장성과 온라인 채널 운영을 함께 체크합니다.";
       }
 
@@ -1123,6 +1174,21 @@
       const box = document.getElementById("areaQuestions");
       box.innerHTML = "";
       areaQuestions.forEach(q => box.appendChild(createQuestionEl(q, answers[q.id])));
+    }
+
+    function collectBusinessContext(){
+      const valueOf = id => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : "";
+      };
+      return {
+        product: valueOf("contextProduct"),
+        strength: valueOf("contextStrength"),
+        problem: valueOf("contextProblem"),
+        competitor: valueOf("contextCompetitor"),
+        promotion: valueOf("contextPromotion"),
+        goal: valueOf("contextGoal")
+      };
     }
 
     function renderResult(){
@@ -1163,6 +1229,7 @@
       const insight = makeInsight(scores, weakest);
       currentDiagnosis = {
         profile: {...profile},
+        businessContext: collectBusinessContext(),
         regionContext: regionGuides[profile.region] || regionGuides["광주 전체"],
         resultType: type,
         baseType,
@@ -1241,7 +1308,7 @@
       const output = document.getElementById("aiOutput");
       if(!button || !status || !output) return;
 
-      if(!currentDiagnosis) renderResult();
+      renderResult();
 
       if(window.location.protocol === "file:"){
         status.textContent = "AI 기능은 Vercel 배포 주소 또는 로컬 서버 환경에서 확인할 수 있습니다. 파일을 직접 열면 기본 진단만 동작합니다.";
@@ -1279,6 +1346,10 @@
     renderTrackSection();
     renderAreaQuestions();
     renderResult();
+    ["contextProduct","contextStrength","contextProblem","contextCompetitor","contextPromotion","contextGoal"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.addEventListener("input", markAiResultStale);
+    });
     document.getElementById("aiGenerateBtn").addEventListener("click", generateAiDiagnosis);
   </script>
 </body>
