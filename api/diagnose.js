@@ -76,26 +76,41 @@ function pickRegionContext(region) {
 function buildPrompt(payload) {
   const profile = payload.profile || {};
   const scores = payload.scores || {};
+  const context = payload.businessContext || {};
   const region = profile.region || "광주 전체";
   const regionContext = pickRegionContext(region);
+  const existingActions = (payload.actions || []).filter(Boolean);
+  const existingKpis = (payload.kpis || []).filter(Boolean);
 
   return {
     system: [
-      "너는 광주 소상공인 마케팅 컨설턴트다.",
-      "사용자가 입력한 업종, 운영 형태, 운영 기간, 고객층, 판매 채널, 진단 점수, 지역 정보를 바탕으로 실무적인 마케팅 진단을 작성한다.",
+      "너는 광주 지역 소상공인을 위한 날카로운 마케팅 전략가다.",
+      "역할은 기존 설문 결과를 다시 요약하는 것이 아니라, 지역×업종×고객층×채널 조건에서 왜 그 문제가 생겼는지 가설을 세우고 이번 주 실행안을 뽑는 것이다.",
+      "반드시 기존 추천 액션과 KPI를 그대로 반복하지 말고, 더 구체적인 현장 문구, 콘텐츠 아이디어, 우선순위, 하지 말아야 할 일을 제안한다.",
       "지역 설명은 제공된 지역 맥락을 기준으로 하며, 최신 통계나 실제 점포 현황처럼 확인되지 않은 사실은 단정하지 않는다.",
-      "과장된 표현, 개발 과정 설명, 투자 권유 문구는 쓰지 않는다.",
-      "한국어로 작성하고, 바로 실행 가능한 표현을 사용한다."
+      "모호한 표현을 피하고, 사장이 바로 따라 할 수 있는 문장과 순서로 작성한다.",
+      "컨설턴트처럼 단호하게 쓰되 불안 조장, 과장, 투자 권유, 개발 과정 설명은 쓰지 않는다.",
+      "한국어로 작성한다."
     ].join(" "),
     user: JSON.stringify({
       requestedOutput: {
-        summary: "2문장 이내의 AI 진단 요약",
-        regionInsight: "선택 지역 특성과 현재 사업 조건을 연결한 해석",
-        actions: "우선 실행 액션 3개",
-        kpis: "추천 KPI 4개",
-        caution: "주의할 점 1개"
+        diagnosis: "기존 결과와 다른 관점의 핵심 판단 2문장",
+        localHypothesis: "이 지역에서 이 문제가 생기는 이유를 고객 행동 가설로 설명",
+        positioning: "이 매장이 잡아야 할 한 줄 포지션",
+        copyExamples: "네이버 플레이스, SNS, 현장 안내 문구 예시 각 1개",
+        sevenDayPlan: "7일 실행 순서",
+        kpis: "이번 주 확인할 KPI 4개와 보는 이유",
+        avoid: "지금 하면 안 되는 착각 2개"
       },
       businessProfile: profile,
+      businessContext: {
+        representativeProductOrService: context.product || "입력 없음",
+        storeStrength: context.strength || "입력 없음",
+        currentProblem: context.problem || "입력 없음",
+        nearbyCompetitorMood: context.competitor || "입력 없음",
+        currentPromotion: context.promotion || "입력 없음",
+        monthlyGoal: context.goal || "입력 없음"
+      },
       diagnosis: {
         resultType: payload.resultType,
         weakest: payload.weakest,
@@ -105,8 +120,8 @@ function buildPrompt(payload) {
         scores
       },
       currentRecommendations: {
-        actions: payload.actions || [],
-        kpis: payload.kpis || []
+        actions: existingActions,
+        kpis: existingKpis
       },
       regionContext: {
         region,
@@ -115,19 +130,44 @@ function buildPrompt(payload) {
         angle: regionContext.angle
       },
       instruction: [
-        "아래 형식 그대로 작성해라.",
-        "요약:",
-        "지역 해석:",
-        "우선 실행:",
-        "1.",
-        "2.",
-        "3.",
-        "추천 KPI:",
+        "아래 형식 그대로 작성해라. 각 항목 제목은 바꾸지 마라.",
+        "기존 추천 액션과 같은 문장을 반복하지 마라.",
+        "지역명, 업종, 고객층, 판매 채널이 모든 핵심 판단에 드러나야 한다.",
+        "대표 상품/서비스나 현재 고민이 입력되어 있으면 반드시 반영해라.",
+        "입력 없음이라고 되어 있는 항목은 추측하지 말고 업종·지역 기준의 실행안으로 대체해라.",
+        "",
+        "핵심 판단:",
+        "-",
+        "",
+        "왜 이 상권에서 이 문제가 생기는가:",
+        "-",
+        "",
+        "잡아야 할 포지션:",
+        "-",
+        "",
+        "바로 쓸 문구:",
+        "- 플레이스:",
+        "- SNS:",
+        "- 현장:",
+        "",
+        "7일 실행 순서:",
+        "1일차:",
+        "2일차:",
+        "3일차:",
+        "4일차:",
+        "5일차:",
+        "6일차:",
+        "7일차:",
+        "",
+        "이번 주 KPI:",
         "-",
         "-",
         "-",
         "-",
-        "주의:"
+        "",
+        "하지 말아야 할 착각:",
+        "-",
+        "-"
       ].join("\n")
     })
   };
@@ -171,12 +211,12 @@ module.exports = async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+        model: process.env.OPENAI_MODEL || "gpt-5-mini",
         input: [
           { role: "system", content: [{ type: "input_text", text: prompt.system }] },
           { role: "user", content: [{ type: "input_text", text: prompt.user }] }
         ],
-        max_output_tokens: 900
+        max_output_tokens: 1400
       })
     });
 
