@@ -6,14 +6,21 @@
   <title>예지 로컬 마케팅 진단</title>
   <style>
     :root{
-      --ink:#111827;
-      --text:#1f2937;
-      --muted:#64748b;
-      --line:#dbe3ef;
-      --soft:#f7fafc;
-      --soft2:#edf2f7;
-      --accent:#0f172a;
-      --blue:#2563eb;
+      --ink:#2f241f;
+      --text:#3a302b;
+      --muted:#667982;
+      --line:#d7ebea;
+      --soft:#f9fffb;
+      --soft2:#eaf7df;
+      --accent:#4fc3c7;
+      --accent-dark:#257f85;
+      --cream:#fff1d5;
+      --cream2:#fff8e8;
+      --mint:#dff3ce;
+      --sky:#d7f5ff;
+      --brown:#4a3328;
+      --peach:#ffd1ad;
+      --blue:#2d6cdf;
       --green:#15803d;
       --amber:#b45309;
       --white:#ffffff;
@@ -24,39 +31,68 @@
       margin:0;
       font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;
       color:var(--text);
-      background:#f4f7fb;
+      background:linear-gradient(135deg, var(--sky) 0%, var(--cream2) 42%, #f1f8df 100%);
     }
     button,input,textarea{font:inherit}
     button{cursor:pointer}
-    .app{min-height:100vh;display:grid;grid-template-columns:300px 1fr}
+    .app{min-height:100vh;display:grid;grid-template-columns:306px 1fr}
     .side{
       position:sticky;
       top:0;
       height:100vh;
       padding:24px;
-      background:#0f172a;
+      background:linear-gradient(180deg, #4a3328 0%, #2d6f72 58%, #265b58 100%);
       color:#fff;
       overflow:auto;
     }
     .brand{display:flex;gap:14px;align-items:center}
     .avatar{
-      width:54px;height:54px;border-radius:18px;
+      width:66px;height:66px;border-radius:22px;
       display:grid;place-items:center;
-      background:#fff;color:#0f172a;
+      background:var(--cream);color:var(--brown);
       font-weight:950;font-size:18px;
       box-shadow:0 14px 34px rgba(0,0,0,.24);
+      overflow:hidden;
+      border:2px solid rgba(255,255,255,.72);
+      position:relative;
     }
-    .brand-title{font-size:20px;font-weight:950;line-height:1.25}
-    .brand-sub{margin-top:4px;color:#cbd5e1;font-size:13px;line-height:1.5}
+    .avatar img{width:100%;height:100%;object-fit:cover;object-position:center}
+    .avatar span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+    .brand-title{font-size:20px;font-weight:950;line-height:1.25;color:#fff7df}
+    .brand-sub{margin-top:4px;color:#d9f9f7;font-size:13px;line-height:1.5}
     .side-note{
       margin-top:24px;
       padding:16px;
       border:1px solid rgba(255,255,255,.14);
       border-radius:18px;
-      background:rgba(255,255,255,.06);
-      color:#e2e8f0;
+      background:rgba(255,248,232,.1);
+      color:#fff8e8;
       font-size:14px;
       line-height:1.75;
+    }
+    .side-character{
+      margin-top:14px;
+      border-radius:22px;
+      background:rgba(255,255,255,.92);
+      border:1px solid rgba(255,255,255,.58);
+      box-shadow:0 18px 42px rgba(25,45,44,.2);
+      overflow:hidden;
+    }
+    .side-character img{
+      display:block;
+      width:100%;
+      aspect-ratio:16 / 9;
+      object-fit:cover;
+      object-position:center;
+      background:var(--cream2);
+    }
+    .side-character-caption{
+      padding:13px 14px 15px;
+      color:var(--brown);
+      font-size:13px;
+      line-height:1.55;
+      font-weight:850;
+      background:linear-gradient(180deg, #fff, var(--cream2));
     }
     .steps{margin-top:24px;display:grid;gap:10px}
     .step-tab{
@@ -70,10 +106,16 @@
       align-items:center;
       gap:10px;
       text-align:left;
-      transition:.18s ease;
+      transition:transform .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
     }
-    .step-tab.active{background:#fff;color:#111827;border-color:#fff}
-    .step-tab.done{border-color:rgba(147,197,253,.55)}
+    .step-tab:hover{transform:translateX(4px);border-color:rgba(255,255,255,.42)}
+    .step-tab.active{
+      background:var(--cream2);
+      color:var(--brown);
+      border-color:#fff;
+      box-shadow:0 14px 28px rgba(0,0,0,.16);
+    }
+    .step-tab.done{border-color:rgba(190,242,100,.5)}
     .step-num{
       width:28px;height:28px;border-radius:50%;
       display:grid;place-items:center;
@@ -81,18 +123,18 @@
       font-size:12px;font-weight:950;
       flex:0 0 auto;
     }
-    .step-tab.active .step-num{background:#111827;color:#fff}
+    .step-tab.active .step-num{background:var(--accent-dark);color:#fff}
     .step-name{font-weight:900;font-size:14px}
     .side-metric{margin-top:24px;display:grid;gap:10px}
     .mini-card{
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.09);
       border-radius:16px;
       padding:13px;
     }
-    .mini-label{font-size:12px;color:#cbd5e1}
+    .mini-label{font-size:12px;color:#d9f9f7}
     .mini-value{margin-top:6px;font-size:15px;font-weight:950;line-height:1.45}
-    .main{padding:26px;min-width:0}
+    .main{padding:28px;min-width:0}
     .topbar{
       display:flex;
       align-items:center;
@@ -100,22 +142,42 @@
       gap:16px;
       margin-bottom:16px;
     }
-    .eyebrow{font-size:13px;font-weight:950;color:#475569}
+    .eyebrow{font-size:13px;font-weight:950;color:var(--accent-dark)}
     h1,h2,h3,p{margin:0}
-    h1{margin-top:6px;font-size:32px;line-height:1.18;letter-spacing:-.03em;color:#111827}
+    h1{margin-top:6px;font-size:34px;line-height:1.16;letter-spacing:0;color:var(--ink)}
     .top-desc{margin-top:8px;color:#64748b;line-height:1.65;font-size:15px}
+    .hero-tags{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+    .hero-tag{
+      display:inline-flex;
+      align-items:center;
+      min-height:34px;
+      border-radius:999px;
+      border:1px solid rgba(79,195,199,.34);
+      background:rgba(255,255,255,.58);
+      color:var(--accent-dark);
+      padding:7px 11px;
+      font-size:12px;
+      font-weight:950;
+      box-shadow:0 10px 22px rgba(37,127,133,.08);
+    }
     .progress{
       min-width:170px;
       border:1px solid var(--line);
       border-radius:999px;
-      background:#fff;
+      background:rgba(255,255,255,.78);
       padding:8px 12px;
-      color:#334155;
+      color:var(--brown);
       font-size:13px;
       font-weight:900;
+      box-shadow:0 14px 30px rgba(47,36,31,.08);
     }
     .bar{height:8px;background:#e5eaf2;border-radius:999px;overflow:hidden;margin-top:8px}
-    .fill{height:100%;background:#111827;border-radius:999px;transition:.22s ease}
+    .fill{
+      height:100%;
+      background:linear-gradient(90deg, var(--accent), var(--accent-dark), #9ccf73);
+      border-radius:999px;
+      transition:width .32s cubic-bezier(.2,.8,.2,1);
+    }
     .stage{
       display:grid;
       grid-template-columns:minmax(0,1fr) 380px;
@@ -123,21 +185,25 @@
       align-items:start;
     }
     .panel{
-      background:#fff;
+      background:rgba(255,255,255,.88);
       border:1px solid var(--line);
       border-radius:22px;
-      box-shadow:0 18px 45px rgba(15,23,42,.06);
+      box-shadow:0 22px 54px rgba(47,36,31,.08);
+      backdrop-filter:blur(14px);
     }
     .step-card{padding:24px}
+    .step-card.page-pop{animation:panelPop .32s cubic-bezier(.2,.8,.2,1)}
+    .step-page.from-forward{animation:stepForward .34s cubic-bezier(.2,.8,.2,1) both}
+    .step-page.from-back{animation:stepBack .34s cubic-bezier(.2,.8,.2,1) both}
     .step-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}
-    .step-title{font-size:26px;line-height:1.2;letter-spacing:-.02em;color:#111827}
+    .step-title{font-size:26px;line-height:1.2;letter-spacing:0;color:var(--ink)}
     .step-copy{margin-top:8px;color:#64748b;line-height:1.7;font-size:14px}
     .pill{
       display:inline-flex;align-items:center;justify-content:center;
       border:1px solid var(--line);
       border-radius:999px;
-      background:#f8fafc;
-      color:#334155;
+      background:linear-gradient(180deg, #fff, var(--cream2));
+      color:var(--brown);
       padding:8px 11px;
       font-size:12px;
       font-weight:900;
@@ -151,13 +217,20 @@
     .chip{
       border:1px solid var(--line);
       background:#fff;
-      color:#334155;
+      color:#365057;
       border-radius:999px;
       padding:10px 14px;
       font-size:14px;
       font-weight:900;
+      transition:transform .18s ease, border-color .18s ease, background .18s ease, color .18s ease, box-shadow .18s ease;
     }
-    .chip.active{background:#111827;color:#fff;border-color:#111827}
+    .chip:hover{transform:translateY(-2px);border-color:var(--accent)}
+    .chip.active{
+      background:linear-gradient(135deg, var(--accent-dark), var(--accent));
+      color:#fff;
+      border-color:transparent;
+      box-shadow:0 12px 22px rgba(37,127,133,.24);
+    }
     .field{display:grid;gap:8px}
     .field.full{grid-column:1 / -1}
     .field label{font-size:13px;font-weight:950;color:#334155}
@@ -166,35 +239,39 @@
       border:1px solid var(--line);
       border-radius:16px;
       color:#111827;
-      background:#fff;
+      background:rgba(255,255,255,.9);
       padding:13px 14px;
       outline:none;
       line-height:1.6;
       font-size:14px;
     }
     .field textarea{min-height:106px;resize:vertical}
-    .field input:focus,.field textarea:focus{border-color:#111827;box-shadow:0 0 0 3px rgba(15,23,42,.08)}
+    .field input:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(79,195,199,.14)}
     .field input::placeholder,.field textarea::placeholder{color:#9aa8bb}
     .question-list{display:grid;gap:12px}
     .question{
       border:1px solid var(--line);
       border-radius:18px;
       padding:16px;
-      background:#fff;
+      background:linear-gradient(180deg, #fff, #fbfffb);
+      transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
     }
-    .question p{font-weight:900;color:#111827;font-size:14px;line-height:1.55}
+    .question:hover{transform:translateY(-2px);border-color:rgba(79,195,199,.52);box-shadow:0 12px 24px rgba(37,127,133,.08)}
+    .question p{font-weight:900;color:var(--ink);font-size:14px;line-height:1.55}
     .scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
     .scale button{
       border:1px solid var(--line);
       border-radius:14px;
-      background:#f8fafc;
+      background:#fbfffb;
       color:#475569;
       padding:10px 6px;
       font-size:12px;
       font-weight:850;
+      transition:transform .16s ease, background .16s ease, color .16s ease, border-color .16s ease;
     }
-    .scale .n{display:block;font-size:16px;color:#111827;font-weight:950;margin-bottom:3px}
-    .scale button.active{background:#111827;border-color:#111827;color:#fff}
+    .scale button:hover{transform:translateY(-2px);border-color:var(--accent)}
+    .scale .n{display:block;font-size:16px;color:var(--ink);font-weight:950;margin-bottom:3px}
+    .scale button.active{background:var(--brown);border-color:var(--brown);color:#fff}
     .scale button.active .n{color:#fff}
     .nav{
       margin-top:22px;
@@ -208,47 +285,110 @@
       border:none;
       border-radius:999px;
       padding:13px 20px;
-      background:#111827;
+      background:linear-gradient(135deg, var(--brown), #243f42);
       color:#fff;
       font-weight:950;
       font-size:14px;
+      box-shadow:0 14px 28px rgba(74,51,40,.2);
+      transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
     }
-    .btn.secondary{background:#fff;color:#111827;border:1px solid var(--line)}
-    .btn.blue{background:#2563eb}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 18px 34px rgba(37,127,133,.2);filter:saturate(1.05)}
+    .btn:active{transform:translateY(0) scale(.98)}
+    .btn.secondary{background:#fff;color:var(--brown);border:1px solid var(--line);box-shadow:0 10px 24px rgba(47,36,31,.08)}
+    .btn.blue{background:linear-gradient(135deg, var(--accent-dark), var(--accent));box-shadow:0 16px 34px rgba(37,127,133,.24)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
     .preview{position:sticky;top:26px;padding:18px}
-    .preview h3{font-size:18px;color:#111827}
+    .preview-character{
+      display:grid;
+      grid-template-columns:94px 1fr;
+      gap:14px;
+      align-items:center;
+      padding:12px;
+      border-radius:20px;
+      background:linear-gradient(135deg, var(--cream2), #f0fff9);
+      border:1px solid rgba(79,195,199,.28);
+      margin-bottom:16px;
+      overflow:hidden;
+    }
+    .preview-character img{
+      width:94px;
+      height:94px;
+      border-radius:20px;
+      object-fit:cover;
+      background:#fff;
+      box-shadow:0 14px 28px rgba(37,127,133,.16);
+      animation:yejiFloat 3.2s ease-in-out infinite;
+    }
+    .preview-character strong{display:block;color:var(--brown);font-size:18px}
+    .preview-character span{display:block;margin-top:5px;color:#5d6f75;font-size:13px;line-height:1.55;font-weight:800}
+    .preview h3{font-size:18px;color:var(--ink)}
     .preview p{margin-top:8px;color:#64748b;font-size:14px;line-height:1.65}
     .preview-list{margin-top:16px;display:grid;gap:10px}
     .preview-item{
       border:1px solid var(--line);
-      background:#f8fafc;
+      background:#fbfffb;
       border-radius:16px;
       padding:13px;
+      transition:transform .18s ease, border-color .18s ease, background .18s ease;
     }
+    .preview-item:hover{transform:translateY(-2px);border-color:var(--accent);background:#fff}
     .preview-item .k{font-size:12px;color:#64748b;font-weight:850}
-    .preview-item .v{margin-top:5px;font-size:14px;color:#111827;font-weight:950;line-height:1.45}
+    .preview-item .v{margin-top:5px;font-size:14px;color:var(--ink);font-weight:950;line-height:1.45}
+    .intro-shot{
+      margin-top:16px;
+      border-radius:20px;
+      overflow:hidden;
+      border:1px solid rgba(79,195,199,.28);
+      background:#fff;
+    }
+    .intro-shot img{
+      display:block;
+      width:100%;
+      height:320px;
+      object-fit:contain;
+      object-position:center;
+      background:#d7f5ff;
+    }
+    .intro-shot-caption{
+      padding:12px 13px;
+      background:linear-gradient(180deg, #fff, var(--cream2));
+      color:var(--brown);
+      font-size:13px;
+      font-weight:900;
+      line-height:1.55;
+    }
     .result-wrap{display:grid;gap:14px}
     .result-hero{
-      background:#0f172a;
+      background:linear-gradient(135deg, #4a3328 0%, #277a7e 100%);
       color:#fff;
       border-radius:22px;
       padding:22px;
       display:grid;
-      grid-template-columns:1fr auto;
+      grid-template-columns:1fr auto auto;
       gap:18px;
       align-items:start;
+      overflow:hidden;
     }
-    .result-label{font-size:13px;color:#cbd5e1;font-weight:850}
-    .result-type{margin-top:8px;font-size:30px;font-weight:950;letter-spacing:-.03em;line-height:1.2}
-    .result-summary{margin-top:10px;color:#dbeafe;line-height:1.75;font-size:15px}
+    .result-label{font-size:13px;color:#d8ffff;font-weight:850}
+    .result-type{margin-top:8px;font-size:30px;font-weight:950;letter-spacing:0;line-height:1.2}
+    .result-summary{margin-top:10px;color:#fff8e8;line-height:1.75;font-size:15px}
+    .result-character{
+      width:118px;
+      height:118px;
+      border-radius:26px;
+      object-fit:cover;
+      background:#fff;
+      border:2px solid rgba(255,255,255,.5);
+      box-shadow:0 18px 40px rgba(0,0,0,.2);
+      animation:yejiFloat 3.4s ease-in-out infinite;
+    }
     .scorebox{
       min-width:112px;
       border:1px solid rgba(255,255,255,.16);
       border-radius:20px;
       padding:14px;
       text-align:center;
-      background:rgba(255,255,255,.08);
+      background:rgba(255,248,232,.14);
     }
     .scorebox .small{font-size:12px;color:#cbd5e1}
     .scorebox .big{font-size:36px;font-weight:950;margin-top:4px}
@@ -256,11 +396,12 @@
     .report-card{
       border:1px solid var(--line);
       border-radius:20px;
-      background:#fff;
+      background:rgba(255,255,255,.9);
       padding:18px;
+      animation:cardRise .38s ease both;
     }
     .report-card.full{grid-column:1 / -1}
-    .report-title{font-size:16px;font-weight:950;color:#111827}
+    .report-title{font-size:16px;font-weight:950;color:var(--ink)}
     .report-body{margin-top:10px;color:#334155;font-size:14px;line-height:1.85}
     .action-list{display:grid;gap:10px;margin-top:12px}
     .action{
@@ -270,29 +411,29 @@
       align-items:start;
       padding:13px;
       border-radius:16px;
-      background:#f8fafc;
+      background:linear-gradient(180deg, #fff, #fbfffb);
       border:1px solid var(--line);
     }
     .num{
       width:34px;height:34px;border-radius:50%;
       display:grid;place-items:center;
-      background:#111827;color:#fff;font-weight:950;font-size:13px;
+      background:var(--accent-dark);color:#fff;font-weight:950;font-size:13px;
     }
     .action p{color:#334155;font-size:14px;line-height:1.7;margin:0}
     .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
     .kpi-card{
       border:1px solid var(--line);
       border-radius:16px;
-      background:#f8fafc;
+      background:linear-gradient(180deg, #fff, #fbfffb);
       padding:13px;
     }
-    .kpi-card .name{font-size:14px;font-weight:950;color:#111827}
+    .kpi-card .name{font-size:14px;font-weight:950;color:var(--ink)}
     .kpi-card .desc{margin-top:6px;font-size:12px;line-height:1.55;color:#64748b}
     .copy-box{
       margin-top:10px;
-      border:1px solid #bfdbfe;
-      background:#eff6ff;
-      color:#1e3a8a;
+      border:1px solid rgba(79,195,199,.34);
+      background:#effdf9;
+      color:#275c61;
       border-radius:16px;
       padding:14px;
       font-size:14px;
@@ -303,7 +444,7 @@
       margin-top:14px;
       border:1px solid var(--line);
       border-radius:18px;
-      background:#f8fafc;
+      background:#fbfffb;
       padding:16px;
       color:#334155;
       font-size:14px;
@@ -313,16 +454,49 @@
     .ai-output:empty{display:none}
     .ai-status{margin-top:10px;color:#64748b;font-size:13px;line-height:1.6}
     .hidden{display:none}
+    @keyframes yejiFloat{
+      0%,100%{transform:translateY(0)}
+      50%{transform:translateY(-7px)}
+    }
+    @keyframes stepForward{
+      from{opacity:0;transform:translateX(18px) translateY(8px)}
+      to{opacity:1;transform:translateX(0) translateY(0)}
+    }
+    @keyframes stepBack{
+      from{opacity:0;transform:translateX(-18px) translateY(8px)}
+      to{opacity:1;transform:translateX(0) translateY(0)}
+    }
+    @keyframes panelPop{
+      0%{transform:scale(.992)}
+      100%{transform:scale(1)}
+    }
+    @keyframes cardRise{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @media (prefers-reduced-motion: reduce){
+      *,*::before,*::after{
+        animation-duration:.01ms !important;
+        animation-iteration-count:1 !important;
+        scroll-behavior:auto !important;
+        transition-duration:.01ms !important;
+      }
+    }
     @media (max-width:1120px){
       .app{grid-template-columns:1fr}
       .side{position:relative;height:auto}
       .stage{grid-template-columns:1fr}
       .preview{position:relative;top:auto}
+      .intro-shot img{height:260px}
     }
     @media (max-width:720px){
       .main{padding:16px}
       .topbar,.step-head,.result-hero{display:block}
       .progress,.scorebox{margin-top:14px}
+      .result-character{margin-top:14px;width:96px;height:96px}
+      .preview-character{grid-template-columns:78px 1fr}
+      .preview-character img{width:78px;height:78px}
+      .intro-shot img{height:220px}
       .grid,.report-grid,.kpi-grid{grid-template-columns:1fr}
       .field.full,.report-card.full{grid-column:auto}
       .scale{grid-template-columns:1fr}
@@ -335,7 +509,10 @@
   <div class="app">
     <aside class="side">
       <div class="brand">
-        <div class="avatar">예지</div>
+        <div class="avatar">
+          <img src="assets/ye-g-character.gif" alt="" />
+          <span>예지</span>
+        </div>
         <div>
           <div class="brand-title">광주형 마케팅 툴</div>
           <div class="brand-sub">진단보다 실행까지 보는 로컬상권 도우미</div>
@@ -343,6 +520,10 @@
       </div>
       <div class="side-note">
         예지는 점수만 알려주지 않습니다. 입력한 매장 상황을 바탕으로 오늘 올릴 문구, 이번 주 미션, 리뷰 대응, 재방문 장치를 만들어줍니다.
+      </div>
+      <div class="side-character">
+        <img src="assets/ye-g-character.gif" alt="예지 캐릭터" />
+        <div class="side-character-caption">YE-G가 매장 상황을 읽고 오늘의 실행 루트를 잡아줍니다.</div>
       </div>
       <div id="stepTabs" class="steps"></div>
       <div class="side-metric">
@@ -360,9 +541,14 @@
     <main class="main">
       <div class="topbar">
         <div>
-          <div class="eyebrow">YEJI LOCAL ACTION DIAGNOSIS</div>
+          <div class="eyebrow">YE-G LOCAL ACTION DIAGNOSIS</div>
           <h1>예지와 함께 매장 마케팅을 실행 단위로 진단합니다</h1>
           <p class="top-desc">한 번에 다 묻지 않고, 사업 정보부터 상권 체감까지 단계별로 확인한 뒤 바로 쓸 수 있는 실행 리포트를 만듭니다.</p>
+          <div class="hero-tags">
+            <span class="hero-tag">광주의 빛</span>
+            <span class="hero-tag">데이터 구슬</span>
+            <span class="hero-tag">오늘 바로 실행</span>
+          </div>
         </div>
         <div class="progress">
           <span id="progressText">1 / 5</span>
@@ -488,6 +674,7 @@
                   <div class="small">실행 준비도</div>
                   <div id="resultScore" class="big">0</div>
                 </div>
+                <img class="result-character" src="assets/ye-g-character.gif" alt="예지 캐릭터" />
               </div>
 
               <div class="report-grid">
@@ -529,6 +716,13 @@
         </section>
 
         <aside class="panel preview">
+          <div class="preview-character">
+            <img src="assets/ye-g-character.gif" alt="예지 캐릭터" />
+            <div>
+              <strong>YE-G</strong>
+              <span>광주의 따뜻한 빛과 데이터 구슬로 실행 포인트를 찾아요.</span>
+            </div>
+          </div>
           <h3>예지 미리보기</h3>
           <p>선택과 입력이 바뀌면 오른쪽 리포트 방향도 함께 바뀝니다.</p>
           <div class="preview-list">
@@ -548,6 +742,10 @@
               <div class="k">추천 콘텐츠</div>
               <div id="previewContent" class="v">대표 상품 사진 + 방문 이유</div>
             </div>
+          </div>
+          <div class="intro-shot">
+            <img src="assets/ye-g-intro.png" alt="예지 캐릭터 소개" />
+            <div class="intro-shot-caption">예지(YE-G): 광주의 빛과 데이터 구슬을 모티브로 한 로컬 마케팅 안내자</div>
           </div>
         </aside>
       </div>
@@ -888,10 +1086,23 @@
     }
 
     function goStep(index){
+      const previousStep = currentStep;
       currentStep = Math.max(0, Math.min(steps.length - 1, index));
+      const directionClass = currentStep >= previousStep ? "from-forward" : "from-back";
       steps.forEach((step, i) => {
-        document.getElementById(step.id).classList.toggle("hidden", i !== currentStep);
+        const page = document.getElementById(step.id);
+        page.classList.remove("from-forward", "from-back");
+        page.classList.toggle("hidden", i !== currentStep);
+        if(i === currentStep){
+          page.classList.add(directionClass);
+        }
       });
+      const card = document.querySelector(".step-card");
+      if(card){
+        card.classList.remove("page-pop");
+        void card.offsetWidth;
+        card.classList.add("page-pop");
+      }
       renderStepTabs();
       renderProgress();
       renderResult();
@@ -953,12 +1164,18 @@
       }
     }
 
-    document.getElementById("prevBtn").onclick = () => goStep(currentStep - 1);
-    document.getElementById("nextBtn").onclick = () => {
+    function handlePrev(){
+      goStep(currentStep - 1);
+    }
+
+    function handleNext(){
       if(currentStep < steps.length - 1) goStep(currentStep + 1);
       else renderAll();
-    };
-    document.getElementById("aiGenerateBtn").onclick = generateAiDiagnosis;
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", handlePrev);
+    document.getElementById("nextBtn").addEventListener("click", handleNext);
+    document.getElementById("aiGenerateBtn").addEventListener("click", generateAiDiagnosis);
     ["contextProduct","contextStrength","contextProblem","contextCompetitor","contextPromotion","contextGoal"].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.addEventListener("input", renderAll);
