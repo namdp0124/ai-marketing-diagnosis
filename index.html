@@ -938,8 +938,13 @@
         });
         const data = await response.json().catch(() => ({}));
         if(!response.ok) throw new Error(data.error || "AI 리포트 생성에 실패했습니다.");
-        output.textContent = data.result || "AI 응답이 비어 있습니다.";
-        status.textContent = `${payload.profile.region} 기준 예지 AI 리포트가 생성되었습니다.`;
+        const warning = data.incomplete
+          ? "\n\n[안내] AI 응답이 길어 일부가 잘렸을 수 있습니다. 다시 생성하거나 Vercel 환경변수 OPENAI_MAX_OUTPUT_TOKENS 값을 더 크게 설정해 주세요."
+          : "";
+        output.textContent = (data.result || "AI 응답이 비어 있습니다.") + warning;
+        status.textContent = data.incomplete
+          ? `${payload.profile.region} 기준 리포트가 생성됐지만 일부가 길이 제한에 걸렸을 수 있습니다.`
+          : `${payload.profile.region} 기준 예지 AI 리포트가 생성되었습니다.`;
       } catch (error) {
         status.textContent = error.message || "AI 리포트 요청 중 문제가 발생했습니다.";
       } finally {
