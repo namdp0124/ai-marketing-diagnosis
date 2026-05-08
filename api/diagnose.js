@@ -91,6 +91,7 @@ function buildPrompt(payload) {
         "기존 리포트 문장을 복사하지 말고, 더 구체적인 문구와 실행으로 확장해라.",
         "문장마다 가능한 한 명사와 행동을 넣어라. 예: '대표 사진 3장 교체', '플레이스 첫 줄 수정', '리뷰 답글 5개 작성'.",
         "입력값이 미입력인 부분은 억지로 꾸미지 말고, 업종·지역 기준의 기본 실행으로 대체해라.",
+        "반드시 마지막 '버릴 선택지'까지 완성해라. 각 항목은 짧고 밀도 있게 쓰고, 전체 답변은 2200~2800자 안에 맞춰라.",
         "",
         "예지의 냉정한 판단",
         "- 2문장. 왜 지금 이 매장은 같은 업종의 다른 매장과 구분이 약한지 설명.",
@@ -157,6 +158,10 @@ module.exports = async function handler(req, res) {
   }
 
   const prompt = buildPrompt(payload);
+  const requestedMaxOutput = Number(process.env.OPENAI_MAX_OUTPUT_TOKENS);
+  const maxOutputTokens = Number.isFinite(requestedMaxOutput)
+    ? Math.max(2200, Math.min(5000, Math.round(requestedMaxOutput)))
+    : 3600;
 
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -171,7 +176,7 @@ module.exports = async function handler(req, res) {
           { role: "system", content: [{ type: "input_text", text: prompt.system }] },
           { role: "user", content: [{ type: "input_text", text: prompt.user }] }
         ],
-        max_output_tokens: 1700
+        max_output_tokens: maxOutputTokens
       })
     });
 
@@ -187,7 +192,15 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 502, { error: "AI 응답을 읽을 수 없습니다." });
     }
 
-    return sendJson(res, 200, { result });
+    const incompleteReason = data.incomplete_details && data.incomplete_details.reason
+      ? data.incomplete_details.reason
+      : "";
+
+    return sendJson(res, 200, {
+      result,
+      incomplete: data.status === "incomplete",
+      reason: incompleteReason
+    });
   } catch (error) {
     return sendJson(res, 500, { error: "AI 진단 요청 중 문제가 발생했습니다." });
   }
