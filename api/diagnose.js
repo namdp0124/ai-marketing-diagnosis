@@ -1,56 +1,3 @@
-const REGION_CONTEXT = {
-  "광주 전체": {
-    type: "복합 생활권",
-    traits: "상권별 성격 차이가 큰 지역입니다. 대학가, 주거지, 업무지구, 문화거리의 고객 흐름을 나눠 보는 편이 좋습니다.",
-    angle: "선택 업종과 고객층에 맞춰 오프라인 접점과 온라인 검색 접점을 함께 점검합니다."
-  },
-  "충장로/동명동": {
-    type: "문화·보행 상권",
-    traits: "보행 유입, 카페·음식·패션 소비, 젊은 고객의 저장·후기 반응이 중요한 편입니다.",
-    angle: "외관, 사진, 지도 저장, SNS 노출, 방문 후 리뷰 흐름을 함께 봅니다."
-  },
-  "상무지구": {
-    type: "업무·회식 상권",
-    traits: "직장인 점심, 저녁 모임, 회식, 빠른 선택과 예약·문의 전환이 중요한 편입니다.",
-    angle: "시간대별 상품 구성, 예약 편의성, 플레이스 정보, 후기 신뢰도를 우선 봅니다."
-  },
-  "첨단지구": {
-    type: "직주근접·신도심 상권",
-    traits: "주거 고객과 직장인 고객이 섞여 있으며 반복 방문과 생활 편의 수요가 함께 나타나는 편입니다.",
-    angle: "단골화 장치, 검색 노출, 퇴근 이후 수요, 가족·직장인 메시지를 나눠 봅니다."
-  },
-  "수완지구": {
-    type: "주거·가족 상권",
-    traits: "가족 단위, 생활밀착 소비, 학원·뷰티·외식 수요가 강한 편입니다.",
-    angle: "신뢰, 후기, 재방문 혜택, 주말·평일 수요 차이를 함께 봅니다."
-  },
-  "전대후문": {
-    type: "대학가 상권",
-    traits: "학생 고객, 가격 민감도, 짧은 콘텐츠 반응, 빠른 유행 변화가 중요한 편입니다.",
-    angle: "입문 가격, 이벤트, 숏폼·SNS 반응, 친구 추천 흐름을 우선 봅니다."
-  },
-  "양림동": {
-    type: "문화·관광형 상권",
-    traits: "목적 방문, 감성 공간, 사진·리뷰·스토리텔링의 영향이 큰 편입니다.",
-    angle: "공간 이미지, 대표 상품, 방문 이유, 저장하고 싶은 콘텐츠 포인트를 봅니다."
-  },
-  "송정역": {
-    type: "교통·방문객 상권",
-    traits: "이동 고객, 외부 방문객, 짧은 체류 시간, 검색 기반 선택이 중요한 편입니다.",
-    angle: "지도 검색, 빠른 설명, 대표 메뉴·서비스, 길찾기와 후기 노출을 우선 봅니다."
-  },
-  "봉선동": {
-    type: "주거·교육 상권",
-    traits: "학부모, 가족, 안정적인 단골 수요와 신뢰 기반 선택이 중요한 편입니다.",
-    angle: "후기, 상담 전환, 재방문·재등록, 지역 커뮤니티 메시지를 함께 봅니다."
-  },
-  "백운동/남구": {
-    type: "생활밀착 상권",
-    traits: "근거리 생활 고객, 재방문, 전화 문의, 현장 접근성이 중요한 편입니다.",
-    angle: "현장 가시성, 쉬운 설명, 단골 관리, 플레이스 기본 정보를 우선 봅니다."
-  }
-};
-
 function sendJson(res, status, payload) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -69,88 +16,100 @@ function getOutputText(data) {
     .trim();
 }
 
-function pickRegionContext(region) {
-  return REGION_CONTEXT[region] || REGION_CONTEXT["광주 전체"];
+function compact(value, fallback) {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
 }
 
 function buildPrompt(payload) {
   const profile = payload.profile || {};
-  const scores = payload.scores || {};
   const context = payload.businessContext || {};
-  const region = profile.region || "광주 전체";
-  const regionContext = pickRegionContext(region);
-  const existingActions = (payload.actions || []).filter(Boolean);
-  const existingKpis = (payload.kpis || []).filter(Boolean);
+  const regionContext = payload.regionContext || {};
+  const industryContext = payload.industryContext || {};
+  const channelContext = payload.channelContext || {};
+  const scores = payload.scores || {};
+  const weakest = payload.weakest || {};
 
   return {
     system: [
-      "너는 광주 지역 소상공인을 위한 날카로운 마케팅 전략가다.",
-      "역할은 기존 설문 결과를 다시 요약하는 것이 아니라, 지역×업종×고객층×채널 조건에서 왜 그 문제가 생겼는지 가설을 세우고 이번 주 실행안을 뽑는 것이다.",
-      "반드시 기존 추천 액션과 KPI를 그대로 반복하지 말고, 더 구체적인 현장 문구, 콘텐츠 아이디어, 우선순위, 하지 말아야 할 일을 제안한다.",
-      "지역 설명은 제공된 지역 맥락을 기준으로 하며, 최신 통계나 실제 점포 현황처럼 확인되지 않은 사실은 단정하지 않는다.",
-      "모호한 표현을 피하고, 사장이 바로 따라 할 수 있는 문장과 순서로 작성한다.",
-      "컨설턴트처럼 단호하게 쓰되 불안 조장, 과장, 투자 권유, 개발 과정 설명은 쓰지 않는다.",
+      "너는 광주 로컬상권 마케팅 실행 코치 '예지'다.",
+      "너의 목표는 뻔한 마케팅 조언이 아니라, 점주가 오늘 바로 복사해서 쓸 수 있는 문구와 7일 실행표를 만드는 것이다.",
+      "금지어: '브랜딩 강화', 'SNS 활성화', '리뷰 관리', '콘텐츠를 꾸준히 올리세요'처럼 구체 행동이 없는 말.",
+      "모든 제안은 지역, 업종, 고객층, 대표 상품/서비스, 현재 고민 중 최소 3개 이상을 엮어야 한다.",
+      "지역 정보는 제공된 지역 맥락을 기준으로 해석하고, 실제 통계나 특정 경쟁 점포 상황을 아는 것처럼 단정하지 않는다.",
+      "친근하지만 단호하게 쓴다. 과장, 투자 권유, 개발 과정 설명은 쓰지 않는다.",
       "한국어로 작성한다."
     ].join(" "),
     user: JSON.stringify({
-      requestedOutput: {
-        diagnosis: "기존 결과와 다른 관점의 핵심 판단 2문장",
-        localHypothesis: "이 지역에서 이 문제가 생기는 이유를 고객 행동 가설로 설명",
-        positioning: "이 매장이 잡아야 할 한 줄 포지션",
-        copyExamples: "네이버 플레이스, SNS, 현장 안내 문구 예시 각 1개",
-        sevenDayPlan: "7일 실행 순서",
-        kpis: "이번 주 확인할 KPI 4개와 보는 이유",
-        avoid: "지금 하면 안 되는 착각 2개"
+      serviceContext: "광주형 AI 로컬상권 마케팅 진단·실행 서비스. 캐릭터 예지가 점포별 실행 미션, 콘텐츠 문구, 리뷰 답글, 이벤트 아이디어를 제안한다.",
+      businessProfile: {
+        industry: compact(profile.industry, "업종 미입력"),
+        region: compact(profile.region, "광주 전체"),
+        operationType: compact(profile.operationType, "혼합"),
+        businessYear: compact(profile.businessYear, "운영 기간 미입력"),
+        customerGroup: compact(profile.customerGroup, "고객층 미입력"),
+        salesChannel: compact(profile.salesChannel, "채널 미입력")
       },
-      businessProfile: profile,
       businessContext: {
-        representativeProductOrService: context.product || "입력 없음",
-        storeStrength: context.strength || "입력 없음",
-        currentProblem: context.problem || "입력 없음",
-        nearbyCompetitorMood: context.competitor || "입력 없음",
-        currentPromotion: context.promotion || "입력 없음",
-        monthlyGoal: context.goal || "입력 없음"
+        product: compact(context.product, "대표 상품/서비스 미입력"),
+        strength: compact(context.strength, "매장 강점 미입력"),
+        problem: compact(context.problem, "현재 고민 미입력"),
+        competitor: compact(context.competitor, "주변 경쟁 느낌 미입력"),
+        promotion: compact(context.promotion, "현재 홍보 방식 미입력"),
+        goal: compact(context.goal, "이번 달 목표 미입력")
       },
-      diagnosis: {
+      localContext: {
+        type: compact(regionContext.type, "광주 로컬상권"),
+        audience: compact(regionContext.audience, "지역 고객"),
+        tension: compact(regionContext.tension, "상권 메시지가 흐릴 수 있음"),
+        proof: compact(regionContext.proof, "저장/문의/방문 전환")
+      },
+      industryContext: {
+        trigger: compact(industryContext.trigger, "대표 가치"),
+        hook: compact(industryContext.hook, "선택 이유"),
+        event: compact(industryContext.event, "첫 이용 혜택")
+      },
+      channelContext: {
+        focus: compact(channelContext.focus, "핵심 채널"),
+        copy: compact(channelContext.copy, "첫 문구 정비")
+      },
+      currentRuleBasedReport: {
         resultType: payload.resultType,
-        weakest: payload.weakest,
-        strongest: payload.strongest,
-        summary: payload.summary,
-        currentInsight: payload.insight,
+        summary: payload.resultSummary,
+        insight: payload.resultInsight,
+        position: payload.position,
+        copy: payload.copy,
+        actions: payload.actions,
+        kpis: payload.kpis,
+        sprint: payload.sprint,
+        weakest,
         scores
       },
-      currentRecommendations: {
-        actions: existingActions,
-        kpis: existingKpis
-      },
-      regionContext: {
-        region,
-        type: regionContext.type,
-        traits: regionContext.traits,
-        angle: regionContext.angle
-      },
       instruction: [
-        "아래 형식 그대로 작성해라. 각 항목 제목은 바꾸지 마라.",
-        "기존 추천 액션과 같은 문장을 반복하지 마라.",
-        "지역명, 업종, 고객층, 판매 채널이 모든 핵심 판단에 드러나야 한다.",
-        "대표 상품/서비스나 현재 고민이 입력되어 있으면 반드시 반영해라.",
-        "입력 없음이라고 되어 있는 항목은 추측하지 말고 업종·지역 기준의 실행안으로 대체해라.",
+        "아래 제목과 순서를 그대로 사용해라.",
+        "기존 리포트 문장을 복사하지 말고, 더 구체적인 문구와 실행으로 확장해라.",
+        "문장마다 가능한 한 명사와 행동을 넣어라. 예: '대표 사진 3장 교체', '플레이스 첫 줄 수정', '리뷰 답글 5개 작성'.",
+        "입력값이 미입력인 부분은 억지로 꾸미지 말고, 업종·지역 기준의 기본 실행으로 대체해라.",
         "",
-        "핵심 판단:",
-        "-",
+        "예지의 냉정한 판단",
+        "- 2문장. 왜 지금 이 매장은 같은 업종의 다른 매장과 구분이 약한지 설명.",
         "",
-        "왜 이 상권에서 이 문제가 생기는가:",
-        "-",
+        "이 상권에서 먹히는 각도",
+        "- 고객이 어떤 순간에 이 매장을 선택할지 가설 2개.",
         "",
-        "잡아야 할 포지션:",
-        "-",
+        "오늘 바로 바꿀 3가지",
+        "1.",
+        "2.",
+        "3.",
         "",
-        "바로 쓸 문구:",
-        "- 플레이스:",
-        "- SNS:",
-        "- 현장:",
+        "복사해서 쓸 문구",
+        "- 네이버 플레이스 첫 줄:",
+        "- SNS 게시글:",
+        "- 현장 안내:",
+        "- 리뷰 답글:",
         "",
-        "7일 실행 순서:",
+        "7일 실행표",
         "1일차:",
         "2일차:",
         "3일차:",
@@ -159,15 +118,11 @@ function buildPrompt(payload) {
         "6일차:",
         "7일차:",
         "",
-        "이번 주 KPI:",
-        "-",
-        "-",
-        "-",
-        "-",
+        "이번 주에 볼 숫자",
+        "- KPI 4개. 각 KPI마다 왜 보는지 1줄.",
         "",
-        "하지 말아야 할 착각:",
-        "-",
-        "-"
+        "버릴 선택지",
+        "- 지금 하지 말아야 할 일 2개와 이유."
       ].join("\n")
     })
   };
@@ -216,7 +171,7 @@ module.exports = async function handler(req, res) {
           { role: "system", content: [{ type: "input_text", text: prompt.system }] },
           { role: "user", content: [{ type: "input_text", text: prompt.user }] }
         ],
-        max_output_tokens: 1400
+        max_output_tokens: 1700
       })
     });
 
