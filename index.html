@@ -296,6 +296,53 @@
       font-size:12px;
       font-weight:900;
     }
+    .market-insight{
+      margin-top:14px;
+      border-top:1px solid var(--line);
+      padding-top:14px;
+    }
+    .market-insight-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+    .market-insight-card{
+      border:1px solid var(--line);
+      border-radius:16px;
+      background:#fffdf7;
+      padding:12px;
+      min-height:92px;
+    }
+    .market-insight-card .k{
+      color:#64748b;
+      font-size:12px;
+      font-weight:900;
+    }
+    .market-insight-card .v{
+      margin-top:7px;
+      color:var(--ink);
+      font-size:14px;
+      line-height:1.55;
+      font-weight:850;
+    }
+    .market-mini-list{
+      margin-top:10px;
+      display:grid;
+      gap:6px;
+      color:#334155;
+      font-size:13px;
+      line-height:1.65;
+    }
+    .market-mini-list div::before{
+      content:"";
+      display:inline-block;
+      width:6px;
+      height:6px;
+      border-radius:999px;
+      background:var(--accent);
+      margin-right:8px;
+      vertical-align:middle;
+    }
     .advanced-market{
       border:1px dashed rgba(79,195,199,.5);
       border-radius:18px;
@@ -590,7 +637,7 @@
       .preview-character{grid-template-columns:78px 1fr}
       .preview-character img{width:78px;height:78px}
       .intro-shot img{height:220px}
-      .grid,.report-grid,.kpi-grid,.market-stats{grid-template-columns:1fr}
+      .grid,.report-grid,.kpi-grid,.market-stats,.market-insight-grid{grid-template-columns:1fr}
       .field.full,.report-card.full{grid-column:auto}
       .scale{grid-template-columns:1fr}
       h1{font-size:26px}
@@ -1170,7 +1217,12 @@
       const categories = (data.topCategories || []).slice(0,3).map(item => `${item.name} ${item.count}개`).join(", ");
       const codes = (data.industryCodes || []).slice(0,2).map(item => item.name).join(", ");
       const zones = (data.nearbyZones || []).slice(0,2).map(item => item.name).join(", ");
-      return `${area} 표본 ${data.sampleCount || 0}개 중 ${profile.industry} 유사 업소 ${data.sameIndustryCount || 0}개, 경쟁 밀도 ${data.competitionDensity || "판단 보류"}${categories ? `, 주요 업종 ${categories}` : ""}${codes ? `, 업종 후보 ${codes}` : ""}${zones ? `, 주변 상권 ${zones}` : ""}`;
+      const insight = data.marketInsight || {};
+      const character = insight.characterLabel ? `, 상권 성격 ${insight.characterLabel}` : "";
+      const opportunities = Array.isArray(insight.opportunityIndustries) && insight.opportunityIndustries.length
+        ? `, 기회 업종 ${insight.opportunityIndustries.slice(0,3).join(", ")}`
+        : "";
+      return `${area} 표본 ${data.sampleCount || 0}개 중 ${profile.industry} 유사 업소 ${data.sameIndustryCount || 0}개, 경쟁 밀도 ${data.competitionDensity || "판단 보류"}${categories ? `, 주요 업종 ${categories}` : ""}${codes ? `, 업종 후보 ${codes}` : ""}${zones ? `, 주변 상권 ${zones}` : ""}${character}${opportunities}`;
     }
 
     function collectBusinessContext(){
@@ -1276,6 +1328,31 @@
       const topDongs = (marketData.topDongs || []).slice(0,4);
       const industryCodes = (marketData.industryCodes || []).slice(0,4);
       const nearbyZones = (marketData.nearbyZones || []).slice(0,4);
+      const insight = marketData.marketInsight || {};
+      const opportunities = Array.isArray(insight.opportunityIndustries) ? insight.opportunityIndustries.slice(0,4) : [];
+      const ideas = Array.isArray(insight.collaborationIdeas) ? insight.collaborationIdeas.slice(0,3) : [];
+      const archetypes = Array.isArray(insight.archetypes) ? insight.archetypes.slice(0,3) : [];
+      const radiusRows = Array.isArray(insight.radiusComparisons) ? insight.radiusComparisons.slice(0,3) : [];
+      const insightHtml = insight.characterLabel ? `
+        <div class="market-insight">
+          <div class="market-insight-grid">
+            <div class="market-insight-card"><div class="k">상권 성격</div><div class="v">${escapeHtml(insight.characterLabel)}</div></div>
+            <div class="market-insight-card"><div class="k">기회 업종</div><div class="v">${opportunities.length ? opportunities.map(escapeHtml).join(", ") : "추가 표본 필요"}</div></div>
+            <div class="market-insight-card"><div class="k">공략 고객</div><div class="v">${escapeHtml(insight.targetCustomer || "고객층 입력값과 상권 표본을 함께 봅니다.")}</div></div>
+            <div class="market-insight-card"><div class="k">추천 메시지</div><div class="v">${escapeHtml(insight.recommendedMessage || "첫 문장을 선택 이유 중심으로 정리하세요.")}</div></div>
+            <div class="market-insight-card"><div class="k">주의할 점</div><div class="v">${escapeHtml(insight.caution || "지역명만으로 고객을 단정하지 않습니다.")}</div></div>
+            <div class="market-insight-card"><div class="k">반경별 경쟁도</div><div class="v">${escapeHtml(insight.radiusComparisonSummary || "좌표 입력 시 300m/500m/1km를 비교합니다.")}</div></div>
+          </div>
+          <div class="market-tags">
+            ${archetypes.map(item => `<span class="market-tag">${escapeHtml(item.name)} ${Number(item.count || 0).toLocaleString()}</span>`).join("")}
+            ${opportunities.map(item => `<span class="market-tag">${escapeHtml(item)}</span>`).join("")}
+          </div>
+          ${ideas.length ? `<div class="market-mini-list">${ideas.map(item => `<div>${escapeHtml(item)}</div>`).join("")}</div>` : ""}
+          ${radiusRows.length ? `<div class="market-mini-list">${radiusRows.map(item => `<div>${Number(item.radiusMeters || 0).toLocaleString()}m: 동일 업종 ${Number(item.sameIndustryCount || 0).toLocaleString()}개 / 표본 ${Number(item.sampleCount || 0).toLocaleString()}개, ${escapeHtml(item.competitionDensity || "판단 보류")}</div>`).join("")}</div>` : ""}
+          <div class="market-detail">${escapeHtml(insight.recentChangeSummary || "최근 변화 데이터는 조회 조건을 넓히면 더 보강할 수 있습니다.")}</div>
+          <div class="market-detail">${escapeHtml(insight.expansionNote || "상권분석 파일데이터를 확보하면 더 확장할 수 있습니다.")}</div>
+        </div>
+      ` : "";
       const modeLabel = marketData.analysisMode === "radius" && marketData.query
         ? `반경 ${marketData.query.radius || 500}m`
         : "행정동";
@@ -1294,6 +1371,7 @@
           ${nearbyZones.map(item => `<span class="market-tag">${escapeHtml(item.name)}</span>`).join("")}
           ${topDongs.map(item => `<span class="market-tag">${escapeHtml(item.name)}</span>`).join("")}
         </div>
+        ${insightHtml}
       `;
       status.textContent = marketData.standardMonth
         ? `소상공인365 기준년월 ${marketData.standardMonth} 데이터를 반영했습니다.`
@@ -1357,6 +1435,10 @@
       const problem = context.problem || weak.name;
       const publicData = marketData && marketData.ok ? marketData : null;
       const publicEvidence = marketEvidenceText(publicData);
+      const publicInsight = publicData && publicData.marketInsight ? publicData.marketInsight : null;
+      const publicAngle = publicInsight && publicInsight.characterLabel
+        ? `${publicInsight.characterLabel} 상권으로 보고 ${publicInsight.recommendedMessage || "선택 이유를 첫 문장에 넣기"}`
+        : "";
 
       const typeMap = {
         acquisition:"발견성 재설계형",
@@ -1368,13 +1450,14 @@
       };
       const resultType = `${profile.region} ${profile.industry} ${typeMap[weak.key]}`;
       const position = `${profile.region}에서 ${profile.customerGroup}이 ${product}을 선택해야 할 이유를 '${strength}' 중심으로 고정`;
-      const summary = `${region.type}에서 ${region.audience}에게는 ${industry.hook}이 먼저 보여야 합니다. 현재 병목은 ${weak.name}이며, ${region.choiceMoment}을 기준으로 실행 루틴을 좁히는 것이 좋습니다.${publicEvidence ? ` 공공데이터로는 ${publicEvidence}입니다.` : ""}`;
+      const summary = `${region.type}에서 ${region.audience}에게는 ${industry.hook}이 먼저 보여야 합니다. 현재 병목은 ${weak.name}이며, ${region.choiceMoment}을 기준으로 실행 루틴을 좁히는 것이 좋습니다.${publicEvidence ? ` 공공데이터로는 ${publicEvidence}입니다.` : ""}${publicAngle ? ` 실행 각도는 ${publicAngle}입니다.` : ""}`;
       const insight = [
         region.tension,
         `${profile.industry} 업종은 ${industry.trigger}이 매출 신호가 되므로, 단순 홍보보다 '${product}'을 선택해야 하는 이유를 증거로 보여줘야 합니다.`,
         `${profile.operationType} 운영에서는 ${region.operationAngle}`,
         `지금 답답한 문제를 '${problem}'로 본다면, 먼저 바꿀 것은 전체 마케팅이 아니라 고객이 처음 보는 첫 문장과 첫 행동입니다.`,
-        publicEvidence ? `공공데이터 기준 ${publicEvidence}이므로, 첫 화면에서 같은 업종과 구분되는 이유를 더 빠르게 보여줘야 합니다.` : ""
+        publicEvidence ? `공공데이터 기준 ${publicEvidence}이므로, 첫 화면에서 같은 업종과 구분되는 이유를 더 빠르게 보여줘야 합니다.` : "",
+        publicInsight && publicInsight.caution ? publicInsight.caution : ""
       ].filter(Boolean).join(" ");
 
       const placeCopy = `[${profile.region}] ${product} 찾는 분께: ${strength}을 살린 ${profile.industry} 경험을 준비했습니다. 방문 전 저장하고 대표 메뉴/서비스를 먼저 확인해보세요.`;
@@ -1385,7 +1468,8 @@
         `${profile.salesChannel}에 ${industry.copy}`,
         `${industry.event}을 7일만 테스트하고 ${channel.kpis[0]}를 매일 기록하세요.`,
         `리뷰 답글은 '${industry.review}' 흐름으로 통일해 다음 방문 이유를 남기세요.`,
-        publicData ? `소상공인365 기준 경쟁 밀도 ${publicData.competitionDensity} 상권으로 보고, 대표 사진 첫 장에 '${strength}' 증거를 고정하세요.` : ""
+        publicData ? `소상공인365 기준 경쟁 밀도 ${publicData.competitionDensity} 상권으로 보고, 대표 사진 첫 장에 '${strength}' 증거를 고정하세요.` : "",
+        publicInsight && publicInsight.recommendedMessage ? `상권 성격(${publicInsight.characterLabel})에 맞춰 ${publicInsight.recommendedMessage}.` : ""
       ].filter(Boolean);
       const kpis = unique([...channel.kpis, ...industry.kpis, region.proof.split(", "), publicData ? "동일 업종 대비 저장/길찾기 반응" : ""]).slice(0,6);
       const sprint = [
@@ -1420,6 +1504,12 @@
           nearbyZones: publicData.nearbyZones,
           administrative: publicData.administrative,
           radiusAnalysis: publicData.radiusAnalysis,
+          radiusComparisons: publicData.radiusComparisons,
+          administrativeZones: publicData.administrativeZones,
+          zoneAnalysis: publicData.zoneAnalysis,
+          upjongBenchmark: publicData.upjongBenchmark,
+          recentChanges: publicData.recentChanges,
+          marketInsight: publicData.marketInsight,
           summary: publicData.summary,
           note: publicData.note
         } : null,
@@ -1471,7 +1561,10 @@
           const top = (d.publicDataContext.topCategories || []).slice(0,3).map(item => `${item.name} ${item.count}개`).join(", ");
           const codes = (d.publicDataContext.industryCodes || []).slice(0,3).map(item => item.name).join(", ");
           const zones = (d.publicDataContext.nearbyZones || []).slice(0,3).map(item => item.name).join(", ");
-          marketResultBox.textContent = `${d.publicDataContext.area} 기준 ${d.publicDataContext.summary} ${top ? `주요 분포: ${top}.` : ""} ${codes ? `공식 업종 후보: ${codes}.` : ""} ${zones ? `주변 상권 후보: ${zones}.` : ""} ${d.publicDataContext.note || ""}`;
+          const insight = d.publicDataContext.marketInsight || {};
+          const opportunities = Array.isArray(insight.opportunityIndustries) ? insight.opportunityIndustries.slice(0,4).join(", ") : "";
+          const radius = insight.radiusComparisonSummary || "";
+          marketResultBox.textContent = `${d.publicDataContext.area} 기준 ${d.publicDataContext.summary} ${top ? `주요 분포: ${top}.` : ""} ${codes ? `공식 업종 후보: ${codes}.` : ""} ${zones ? `주변 상권 후보: ${zones}.` : ""} ${insight.characterLabel ? `상권 성격: ${insight.characterLabel}.` : ""} ${opportunities ? `기회 업종: ${opportunities}.` : ""} ${insight.targetCustomer ? `공략 고객: ${insight.targetCustomer}.` : ""} ${insight.recommendedMessage ? `추천 메시지: ${insight.recommendedMessage}.` : ""} ${radius ? `반경 비교: ${radius}.` : ""} ${insight.caution || ""} ${d.publicDataContext.note || ""}`;
         } else {
           marketResultBox.textContent = "소상공인365 데이터를 불러오면 동일 업종 밀도와 주요 업종 분포가 예지 리포트에 반영됩니다.";
         }
@@ -1556,8 +1649,21 @@
       const aiOutput = document.getElementById("aiOutput");
       const actions = d.actions.map((action, index) => `${index + 1}. ${action}`).join("\n");
       const kpis = d.kpis.map(kpi => `- ${kpi}`).join("\n");
+      const marketInsight = d.publicDataContext && d.publicDataContext.marketInsight ? d.publicDataContext.marketInsight : null;
       const market = d.publicDataContext
-        ? `${d.publicDataContext.area}\n${d.publicDataContext.summary}\n${d.publicDataContext.note || ""}`.trim()
+        ? [
+          d.publicDataContext.area,
+          d.publicDataContext.summary,
+          marketInsight && marketInsight.characterLabel ? `상권 성격: ${marketInsight.characterLabel}` : "",
+          marketInsight && marketInsight.sameIndustryDensity ? `동일 업종 밀도: ${marketInsight.sameIndustryDensity}` : "",
+          marketInsight && Array.isArray(marketInsight.opportunityIndustries) ? `기회 업종: ${marketInsight.opportunityIndustries.join(", ")}` : "",
+          marketInsight && marketInsight.targetCustomer ? `공략 고객: ${marketInsight.targetCustomer}` : "",
+          marketInsight && marketInsight.recommendedMessage ? `추천 메시지: ${marketInsight.recommendedMessage}` : "",
+          marketInsight && marketInsight.caution ? `주의할 점: ${marketInsight.caution}` : "",
+          marketInsight && marketInsight.radiusComparisonSummary ? `반경별 경쟁도: ${marketInsight.radiusComparisonSummary}` : "",
+          marketInsight && marketInsight.recentChangeSummary ? `최근 변화: ${marketInsight.recentChangeSummary}` : "",
+          d.publicDataContext.note || ""
+        ].filter(Boolean).join("\n").trim()
         : "소상공인365 공공데이터를 아직 불러오지 않았습니다.";
       const aiText = aiOutput && aiOutput.textContent.trim()
         ? `\n\n[예지 AI 확장 리포트]\n${aiOutput.textContent.trim()}`
@@ -1683,7 +1789,7 @@
       const a = document.createElement("a");
       const date = new Date().toISOString().slice(0, 10);
       a.href = url;
-      a.download = `yeji-${mode}-report-${date}.txt`;
+      a.download = `ye-g-${mode}-report-${date}.txt`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1726,6 +1832,9 @@
             district,
             dongName,
             industry: profile.industry,
+            customerGroup: profile.customerGroup,
+            salesChannel: profile.salesChannel,
+            operationType: profile.operationType,
             longitude,
             latitude,
             radius
