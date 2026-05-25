@@ -296,6 +296,23 @@
       font-size:12px;
       font-weight:900;
     }
+    .advanced-market{
+      border:1px dashed rgba(79,195,199,.5);
+      border-radius:18px;
+      background:rgba(255,255,255,.62);
+      padding:13px;
+    }
+    .advanced-market summary{
+      cursor:pointer;
+      color:var(--accent-dark);
+      font-size:13px;
+      font-weight:950;
+      list-style:none;
+    }
+    .advanced-market summary::-webkit-details-marker{display:none}
+    .advanced-market summary::after{content:"+";float:right;font-size:16px}
+    .advanced-market[open] summary::after{content:"-"}
+    .advanced-market .grid{margin-top:12px}
     .question-list{display:grid;gap:12px}
     .question{
       border:1px solid var(--line);
@@ -666,16 +683,31 @@
                 <textarea id="contextProblem" placeholder="예: 플레이스 조회는 있는데 방문이 적음, SNS 반응은 있는데 문의가 안 옴"></textarea>
               </div>
               <div class="field">
-                <label for="contextCompetitor">주변 경쟁 느낌</label>
-                <input id="contextCompetitor" type="text" placeholder="예: 감성 카페가 많음, 저가 음식점이 많음" />
+                <label for="contextCompetitor">주변 상황 체감</label>
+                <select id="contextCompetitor">
+                  <option value="주변 상황은 잘 모르겠어요">주변 상황은 잘 모르겠어요</option>
+                  <option value="비슷한 가게가 많은 것 같아요">비슷한 가게가 많은 것 같아요</option>
+                  <option value="가격 경쟁이 있는 것 같아요">가격 경쟁이 있는 것 같아요</option>
+                  <option value="새 가게가 자주 생기는 것 같아요">새 가게가 자주 생기는 것 같아요</option>
+                  <option value="유동인구가 줄어든 것 같아요">유동인구가 줄어든 것 같아요</option>
+                  <option value="우리만의 차이가 잘 안 보여요">우리만의 차이가 잘 안 보여요</option>
+                </select>
               </div>
               <div class="field">
                 <label for="contextPromotion">현재 홍보 방식</label>
                 <input id="contextPromotion" type="text" placeholder="예: 인스타 게시물, 네이버 플레이스, 전단지" />
               </div>
               <div class="field full">
-                <label for="contextGoal">이번 달 목표</label>
-                <input id="contextGoal" type="text" placeholder="예: 평일 오후 방문 늘리기, 예약 문의 늘리기, 리뷰 20개 확보" />
+                <label for="contextGoal">가장 바꾸고 싶은 것</label>
+                <select id="contextGoal">
+                  <option value="무엇부터 해야 할지 모르겠어요">무엇부터 해야 할지 모르겠어요</option>
+                  <option value="방문 손님을 늘리고 싶어요">방문 손님을 늘리고 싶어요</option>
+                  <option value="문의/예약을 늘리고 싶어요">문의/예약을 늘리고 싶어요</option>
+                  <option value="리뷰를 늘리고 싶어요">리뷰를 늘리고 싶어요</option>
+                  <option value="재방문을 늘리고 싶어요">재방문을 늘리고 싶어요</option>
+                  <option value="대표 상품을 더 알리고 싶어요">대표 상품을 더 알리고 싶어요</option>
+                  <option value="평일이나 비수기 매출을 보완하고 싶어요">평일이나 비수기 매출을 보완하고 싶어요</option>
+                </select>
               </div>
               <div class="market-panel">
                 <div class="market-head">
@@ -701,24 +733,29 @@
                     <label for="marketDong">행정동명</label>
                     <input id="marketDong" type="text" placeholder="예: 동명동, 치평동, 수완동" />
                   </div>
-                  <div class="field">
-                    <label for="marketLongitude">경도</label>
-                    <input id="marketLongitude" type="text" inputmode="decimal" placeholder="예: 126.9231" />
-                  </div>
-                  <div class="field">
-                    <label for="marketLatitude">위도</label>
-                    <input id="marketLatitude" type="text" inputmode="decimal" placeholder="예: 35.1495" />
-                  </div>
-                  <div class="field">
-                    <label for="marketRadius">반경</label>
-                    <select id="marketRadius">
-                      <option value="300">300m</option>
-                      <option value="500" selected>500m</option>
-                      <option value="1000">1km</option>
-                      <option value="1500">1.5km</option>
-                    </select>
-                  </div>
                 </div>
+                <details class="advanced-market">
+                  <summary>정확한 반경 분석이 필요할 때만 열기</summary>
+                  <div class="grid">
+                    <div class="field">
+                      <label for="marketLongitude">경도</label>
+                      <input id="marketLongitude" type="text" inputmode="decimal" placeholder="예: 126.9231" />
+                    </div>
+                    <div class="field">
+                      <label for="marketLatitude">위도</label>
+                      <input id="marketLatitude" type="text" inputmode="decimal" placeholder="예: 35.1495" />
+                    </div>
+                    <div class="field">
+                      <label for="marketRadius">반경</label>
+                      <select id="marketRadius">
+                        <option value="300">300m</option>
+                        <option value="500" selected>500m</option>
+                        <option value="1000">1km</option>
+                        <option value="1500">1.5km</option>
+                      </select>
+                    </div>
+                  </div>
+                </details>
                 <div class="market-actions">
                   <button id="marketLoadBtn" type="button" class="btn blue">공공데이터 불러오기</button>
                   <div id="marketStatus" class="market-status">Vercel 환경변수 연결 후 조회할 수 있습니다.</div>
@@ -1461,7 +1498,10 @@
     document.getElementById("marketRadius").addEventListener("change", () => clearMarketData("반경이 바뀌었습니다. 공공데이터를 다시 불러오세요."));
     ["contextProduct","contextStrength","contextProblem","contextCompetitor","contextPromotion","contextGoal"].forEach(id => {
       const el = document.getElementById(id);
-      if(el) el.addEventListener("input", renderAll);
+      if(el){
+        el.addEventListener("input", renderAll);
+        el.addEventListener("change", renderAll);
+      }
     });
 
     renderChoiceGroups();
