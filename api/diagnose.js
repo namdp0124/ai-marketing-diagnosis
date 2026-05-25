@@ -57,9 +57,9 @@ function buildPrompt(payload) {
         product: compact(context.product, "대표 상품/서비스 미입력"),
         strength: compact(context.strength, "매장 강점 미입력"),
         problem: compact(context.problem, "현재 고민 미입력"),
-        competitor: compact(context.competitor, "주변 경쟁 느낌 미입력"),
+        competitor: compact(context.competitor, "주변 상황 체감 미입력"),
         promotion: compact(context.promotion, "현재 홍보 방식 미입력"),
-        goal: compact(context.goal, "이번 달 목표 미입력")
+        goal: compact(context.goal, "바꾸고 싶은 것 미입력")
       },
       localContext: {
         type: compact(regionContext.type, "광주 로컬상권"),
