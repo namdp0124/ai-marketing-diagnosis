@@ -65,7 +65,10 @@ function buildPrompt(payload) {
         type: compact(regionContext.type, "광주 로컬상권"),
         audience: compact(regionContext.audience, "지역 고객"),
         tension: compact(regionContext.tension, "상권 메시지가 흐릴 수 있음"),
-        proof: compact(regionContext.proof, "저장/문의/방문 전환")
+        proof: compact(regionContext.proof, "저장/문의/방문 전환"),
+        segmentAngle: compact(regionContext.segmentAngle, "지역 x 업종 x 고객층"),
+        choiceMoment: compact(regionContext.choiceMoment, "고객이 선택을 결정하는 순간"),
+        operationAngle: compact(regionContext.operationAngle, "운영 형태별 실행 포인트")
       },
       industryContext: {
         trigger: compact(industryContext.trigger, "대표 가치"),
@@ -112,6 +115,7 @@ function buildPrompt(payload) {
         "기존 리포트 문장을 복사하지 말고, 더 구체적인 문구와 실행으로 확장해라.",
         "문장마다 가능한 한 명사와 행동을 넣어라. 예: '대표 사진 3장 교체', '플레이스 첫 줄 수정', '리뷰 답글 5개 작성'.",
         "입력값이 미입력인 부분은 억지로 꾸미지 말고, 업종·지역 기준의 기본 실행으로 대체해라.",
+        "지역명 하나로 고객을 단정하지 말고 업종, 고객층, 판매 채널, 운영 형태를 함께 엮어라. 예: 의류라면 상무지구라도 '빠른 식사'가 아니라 '퇴근 후/주말에 입을 상황별 코디'처럼 해석해라.",
         "publicDataContext가 null이 아니면 '이 상권에서 먹히는 각도' 또는 '오늘 바로 바꿀 3가지' 중 한 곳에 공공데이터 근거를 자연스럽게 반영해라.",
         "radiusAnalysis와 nearbyZones가 있으면 행정동 전체보다 반경 데이터와 주변 상권 후보를 우선해서 마케팅 실행 방향을 좁혀라.",
         "반드시 마지막 '버릴 선택지'까지 완성해라. 각 항목은 짧고 밀도 있게 쓰고, 전체 답변은 2200~2800자 안에 맞춰라.",
