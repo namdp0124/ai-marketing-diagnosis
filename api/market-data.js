@@ -29,6 +29,12 @@ function getHeader(data) {
   return {};
 }
 
+function isNoDataResponse(header) {
+  const code = compact(header.resultCode, "");
+  const message = compact(header.resultMsg, "");
+  return code.includes("NODATA") || code.includes("NO_DATA") || message.includes("NODATA") || message.includes("NO_DATA");
+}
+
 function countBy(items, getter) {
   const counts = new Map();
   items.forEach(item => {
@@ -115,7 +121,7 @@ function buildDensityLabel(count, sampleSize) {
   return "낮음";
 }
 
-async function fetchApi({ serviceKey, path, params }) {
+async function fetchApi({ serviceKey, path, params, allowNoData = false }) {
   const endpoint = `https://apis.data.go.kr/B553077/api/open/sdsc2/${path}`;
   const encodedServiceKey = serviceKey.includes("%") ? serviceKey : encodeURIComponent(serviceKey);
   const searchParams = new URLSearchParams({ ...params, type: "json" });
@@ -136,6 +142,9 @@ async function fetchApi({ serviceKey, path, params }) {
 
   const header = getHeader(data);
   const resultCode = compact(header.resultCode, "00");
+  if (allowNoData && isNoDataResponse(header)) {
+    return data;
+  }
   if (resultCode !== "00" && resultCode !== "NORMAL_CODE") {
     throw new Error(header.resultMsg || "소상공인365 API에서 오류 응답을 받았습니다.");
   }
@@ -143,12 +152,21 @@ async function fetchApi({ serviceKey, path, params }) {
   return data;
 }
 
-async function fetchPagedItems({ serviceKey, path, params, maxPages }) {
+async function fetchPagedItems({ serviceKey, path, params, maxPages, allowNoData = false }) {
   const firstPage = await fetchApi({
     serviceKey,
     path,
-    params: { ...params, pageNo: "1", numOfRows: "1000" }
+    params: { ...params, pageNo: "1", numOfRows: "1000" },
+    allowNoData
   });
+  if (isNoDataResponse(getHeader(firstPage))) {
+    return {
+      items: [],
+      totalCount: 0,
+      header: getHeader(firstPage),
+      pagesFetched: 1
+    };
+  }
   const firstBody = getBody(firstPage);
   const totalCount = Number(firstBody.totalCount || 0);
   let items = normalizeItems(firstPage);
@@ -159,7 +177,8 @@ async function fetchPagedItems({ serviceKey, path, params, maxPages }) {
     const pageData = await fetchApi({
       serviceKey,
       path,
-      params: { ...params, pageNo: String(pageNo), numOfRows: "1000" }
+      params: { ...params, pageNo: String(pageNo), numOfRows: "1000" },
+      allowNoData
     });
     items = items.concat(normalizeItems(pageData));
   }
@@ -172,6 +191,35 @@ async function fetchPagedItems({ serviceKey, path, params, maxPages }) {
   };
 }
 
+async function fetchAdministrativeStores({ serviceKey, districtCode, maxPages }) {
+  const attempts = [
+    {
+      path: "baroApi",
+      params: { resId: "store", catId: "dong", divId: "signguCd", key: districtCode }
+    },
+    {
+      path: "storeListInDong",
+      params: { divId: "signguCd", key: districtCode }
+    }
+  ];
+
+  let lastResult = null;
+  for (const attempt of attempts) {
+    const result = await fetchPagedItems({
+      serviceKey,
+      path: attempt.path,
+      params: attempt.params,
+      maxPages,
+      allowNoData: true
+    });
+    if (result.items.length) {
+      return { ...result, sourcePath: attempt.path };
+    }
+    lastResult = { ...result, sourcePath: attempt.path };
+  }
+  return lastResult || { items: [], totalCount: 0, header: {}, pagesFetched: 0, sourcePath: "" };
+}
+
 async function fetchIndustryCodes(serviceKey, industry) {
   const keywords = INDUSTRY_KEYWORDS[industry] || [];
   if (!keywords.length) return [];
@@ -180,7 +228,8 @@ async function fetchIndustryCodes(serviceKey, industry) {
     const data = await fetchApi({
       serviceKey,
       path: "smallUpjongList",
-      params: { pageNo: "1", numOfRows: "1000" }
+      params: { pageNo: "1", numOfRows: "1000" },
+      allowNoData: true
     });
     return normalizeItems(data)
       .map(item => {
@@ -214,7 +263,8 @@ async function fetchNearbyZones({ serviceKey, longitude, latitude, radius }) {
         radius: String(radius),
         pageNo: "1",
         numOfRows: "20"
-      }
+      },
+      allowNoData: true
     });
     return normalizeItems(data).slice(0, 6).map(item => ({
       id: compact(item.trarNo || item.trdarNo || item.mainTrarNo, ""),
@@ -289,10 +339,9 @@ module.exports = async function handler(req, res) {
 
   try {
     const industryCodes = await fetchIndustryCodes(serviceKey, industry);
-    const districtData = await fetchPagedItems({
+    const districtData = await fetchAdministrativeStores({
       serviceKey,
-      path: "storeListInDong",
-      params: { divId: "signguCd", key: districtCode },
+      districtCode,
       maxPages
     });
     const totalCount = districtData.totalCount;
@@ -319,7 +368,8 @@ module.exports = async function handler(req, res) {
           cx: String(longitude),
           cy: String(latitude)
         },
-        maxPages
+        maxPages,
+        allowNoData: true
       });
       radiusAnalysis = {
         ...summarizeStores({ items: radiusData.items, industry, industryCodes }),
@@ -358,7 +408,8 @@ module.exports = async function handler(req, res) {
         longitude,
         latitude,
         radius,
-        pagesFetched: districtData.pagesFetched
+        pagesFetched: districtData.pagesFetched,
+        sourcePath: districtData.sourcePath
       },
       analysisMode: radiusAnalysis ? "radius" : "administrative",
       totalCount,
@@ -382,7 +433,9 @@ module.exports = async function handler(req, res) {
       summary: `${sampleNote} 기준 ${industry} 유사 업소 ${administrative.sameIndustryCount}개가 잡혔고, 경쟁 밀도는 ${administrative.competitionDensity}으로 보입니다.${radiusText} 주요 업종은 ${categoryText}입니다.${codeText}${zoneText}`,
       note: dongName && !filteredItems.length
         ? "입력한 행정동명이 표본에 없어 행정구 표본으로 요약했습니다."
-        : "총 업소 수는 행정구 기준이며, 업종/행정동/반경 분석은 조회 표본 기준입니다."
+        : targetItems.length
+        ? "총 업소 수는 행정구 기준이며, 업종/행정동/반경 분석은 조회 표본 기준입니다."
+        : "해당 조건에서 공공데이터 표본이 없어 0개로 표시했습니다. 행정동명을 비우거나 행정구만 선택해 다시 조회해 보세요."
     });
   } catch (error) {
     return sendJson(res, 502, {
