@@ -276,7 +276,7 @@
       padding:14px;
     }
     .market-summary.show{display:block}
-    .market-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .market-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
     .market-stat{
       border:1px solid var(--line);
       border-radius:16px;
@@ -681,7 +681,7 @@
                 <div class="market-head">
                   <div>
                     <div class="market-title">소상공인365 공공데이터</div>
-                    <div class="market-copy">행정구와 행정동명을 기준으로 주변 업소 표본, 동일 업종 밀도, 주요 업종 분포를 불러옵니다.</div>
+                    <div class="market-copy">행정동 표본에 매장 좌표 반경 데이터와 공식 업종 소분류 후보를 함께 반영합니다.</div>
                   </div>
                   <span class="pill">상권 데이터</span>
                 </div>
@@ -700,6 +700,23 @@
                   <div class="field">
                     <label for="marketDong">행정동명</label>
                     <input id="marketDong" type="text" placeholder="예: 동명동, 치평동, 수완동" />
+                  </div>
+                  <div class="field">
+                    <label for="marketLongitude">경도</label>
+                    <input id="marketLongitude" type="text" inputmode="decimal" placeholder="예: 126.9231" />
+                  </div>
+                  <div class="field">
+                    <label for="marketLatitude">위도</label>
+                    <input id="marketLatitude" type="text" inputmode="decimal" placeholder="예: 35.1495" />
+                  </div>
+                  <div class="field">
+                    <label for="marketRadius">반경</label>
+                    <select id="marketRadius">
+                      <option value="300">300m</option>
+                      <option value="500" selected>500m</option>
+                      <option value="1000">1km</option>
+                      <option value="1500">1.5km</option>
+                    </select>
                   </div>
                 </div>
                 <div class="market-actions">
@@ -959,11 +976,15 @@
     }
     function marketEvidenceText(data){
       if(!data || !data.ok) return "";
-      const area = data.query && data.query.dongName
+      const area = data.analysisMode === "radius" && data.query
+        ? `${data.query.districtName} 반경 ${data.query.radius || 500}m`
+        : data.query && data.query.dongName
         ? `${data.query.districtName} ${data.query.dongName}`
         : data.query ? data.query.districtName : profile.region;
       const categories = (data.topCategories || []).slice(0,3).map(item => `${item.name} ${item.count}개`).join(", ");
-      return `${area} 표본 ${data.sampleCount || 0}개 중 ${profile.industry} 유사 업소 ${data.sameIndustryCount || 0}개, 경쟁 밀도 ${data.competitionDensity || "판단 보류"}${categories ? `, 주요 업종 ${categories}` : ""}`;
+      const codes = (data.industryCodes || []).slice(0,2).map(item => item.name).join(", ");
+      const zones = (data.nearbyZones || []).slice(0,2).map(item => item.name).join(", ");
+      return `${area} 표본 ${data.sampleCount || 0}개 중 ${profile.industry} 유사 업소 ${data.sameIndustryCount || 0}개, 경쟁 밀도 ${data.competitionDensity || "판단 보류"}${categories ? `, 주요 업종 ${categories}` : ""}${codes ? `, 업종 후보 ${codes}` : ""}${zones ? `, 주변 상권 ${zones}` : ""}`;
     }
 
     function collectBusinessContext(){
@@ -1066,16 +1087,24 @@
 
       const topCategories = (marketData.topCategories || []).slice(0,4);
       const topDongs = (marketData.topDongs || []).slice(0,4);
+      const industryCodes = (marketData.industryCodes || []).slice(0,4);
+      const nearbyZones = (marketData.nearbyZones || []).slice(0,4);
+      const modeLabel = marketData.analysisMode === "radius" && marketData.query
+        ? `반경 ${marketData.query.radius || 500}m`
+        : "행정동";
       summary.classList.add("show");
       summary.innerHTML = `
         <div class="market-stats">
           <div class="market-stat"><div class="k">행정구 전체 업소</div><div class="v">${Number(marketData.totalCount || 0).toLocaleString()}개</div></div>
-          <div class="market-stat"><div class="k">표본 내 동일 업종</div><div class="v">${Number(marketData.sameIndustryCount || 0).toLocaleString()}개</div></div>
+          <div class="market-stat"><div class="k">${escapeHtml(modeLabel)} 분석 표본</div><div class="v">${Number(marketData.sampleCount || 0).toLocaleString()}개</div></div>
+          <div class="market-stat"><div class="k">동일 업종 후보</div><div class="v">${Number(marketData.sameIndustryCount || 0).toLocaleString()}개</div></div>
           <div class="market-stat"><div class="k">경쟁 밀도</div><div class="v">${marketData.competitionDensity || "판단 보류"}</div></div>
         </div>
         <div class="market-detail">${escapeHtml(marketData.summary || "상권 데이터를 불러왔습니다.")}</div>
         <div class="market-tags">
           ${topCategories.map(item => `<span class="market-tag">${escapeHtml(item.name)} ${Number(item.count || 0).toLocaleString()}개</span>`).join("")}
+          ${industryCodes.map(item => `<span class="market-tag">${escapeHtml(item.name)}</span>`).join("")}
+          ${nearbyZones.map(item => `<span class="market-tag">${escapeHtml(item.name)}</span>`).join("")}
           ${topDongs.map(item => `<span class="market-tag">${escapeHtml(item.name)}</span>`).join("")}
         </div>
       `;
@@ -1190,13 +1219,19 @@
         publicDataContext: publicData ? {
           source: publicData.source,
           standardMonth: publicData.standardMonth,
-          area: publicData.query && publicData.query.dongName ? `${publicData.query.districtName} ${publicData.query.dongName}` : publicData.query ? publicData.query.districtName : profile.region,
+          area: publicData.analysisMode === "radius" && publicData.query ? `${publicData.query.districtName} 반경 ${publicData.query.radius || 500}m` : publicData.query && publicData.query.dongName ? `${publicData.query.districtName} ${publicData.query.dongName}` : publicData.query ? publicData.query.districtName : profile.region,
+          analysisMode: publicData.analysisMode,
+          radiusMeters: publicData.query ? publicData.query.radius : null,
           totalStores: publicData.totalCount,
           sampleStores: publicData.sampleCount,
           sameIndustryStores: publicData.sameIndustryCount,
           competitionDensity: publicData.competitionDensity,
           topCategories: publicData.topCategories,
           topDongs: publicData.topDongs,
+          industryCodes: publicData.industryCodes,
+          nearbyZones: publicData.nearbyZones,
+          administrative: publicData.administrative,
+          radiusAnalysis: publicData.radiusAnalysis,
           summary: publicData.summary,
           note: publicData.note
         } : null,
@@ -1246,7 +1281,9 @@
       if(marketResultBox){
         if(d.publicDataContext){
           const top = (d.publicDataContext.topCategories || []).slice(0,3).map(item => `${item.name} ${item.count}개`).join(", ");
-          marketResultBox.textContent = `${d.publicDataContext.area} 기준 ${d.publicDataContext.summary} ${top ? `주요 분포: ${top}.` : ""} ${d.publicDataContext.note || ""}`;
+          const codes = (d.publicDataContext.industryCodes || []).slice(0,3).map(item => item.name).join(", ");
+          const zones = (d.publicDataContext.nearbyZones || []).slice(0,3).map(item => item.name).join(", ");
+          marketResultBox.textContent = `${d.publicDataContext.area} 기준 ${d.publicDataContext.summary} ${top ? `주요 분포: ${top}.` : ""} ${codes ? `공식 업종 후보: ${codes}.` : ""} ${zones ? `주변 상권 후보: ${zones}.` : ""} ${d.publicDataContext.note || ""}`;
         } else {
           marketResultBox.textContent = "소상공인365 데이터를 불러오면 동일 업종 밀도와 주요 업종 분포가 예지 리포트에 반영됩니다.";
         }
@@ -1316,6 +1353,9 @@
       const button = document.getElementById("marketLoadBtn");
       const status = document.getElementById("marketStatus");
       const dongInput = document.getElementById("marketDong");
+      const longitudeInput = document.getElementById("marketLongitude");
+      const latitudeInput = document.getElementById("marketLatitude");
+      const radiusSelect = document.getElementById("marketRadius");
       if(!button || !status) return;
 
       if(window.location.protocol === "file:"){
@@ -1325,8 +1365,15 @@
 
       const district = resolveMarketDistrict();
       const dongName = dongInput ? dongInput.value.trim() : "";
+      const longitude = longitudeInput ? longitudeInput.value.trim() : "";
+      const latitude = latitudeInput ? latitudeInput.value.trim() : "";
+      const radius = radiusSelect ? radiusSelect.value : "500";
+      if((longitude && !latitude) || (!longitude && latitude)){
+        status.textContent = "반경 조회를 쓰려면 경도와 위도를 둘 다 입력해 주세요.";
+        return;
+      }
       button.disabled = true;
-      status.textContent = `${district}${dongName ? ` ${dongName}` : ""} 상권 데이터를 불러오는 중입니다.`;
+      status.textContent = `${district}${dongName ? ` ${dongName}` : ""}${longitude && latitude ? ` 반경 ${radius}m` : ""} 상권 데이터를 불러오는 중입니다.`;
 
       try {
         const response = await fetch("/api/market-data", {
@@ -1336,7 +1383,10 @@
             region: profile.region,
             district,
             dongName,
-            industry: profile.industry
+            industry: profile.industry,
+            longitude,
+            latitude,
+            radius
           })
         });
         const data = await response.json().catch(() => ({}));
@@ -1406,6 +1456,9 @@
     document.getElementById("marketLoadBtn").addEventListener("click", loadMarketData);
     document.getElementById("marketDistrict").addEventListener("change", () => clearMarketData("조회 행정구가 바뀌었습니다. 공공데이터를 다시 불러오세요."));
     document.getElementById("marketDong").addEventListener("input", () => clearMarketData("행정동명이 바뀌었습니다. 공공데이터를 다시 불러오세요."));
+    document.getElementById("marketLongitude").addEventListener("input", () => clearMarketData("좌표가 바뀌었습니다. 공공데이터를 다시 불러오세요."));
+    document.getElementById("marketLatitude").addEventListener("input", () => clearMarketData("좌표가 바뀌었습니다. 공공데이터를 다시 불러오세요."));
+    document.getElementById("marketRadius").addEventListener("change", () => clearMarketData("반경이 바뀌었습니다. 공공데이터를 다시 불러오세요."));
     ["contextProduct","contextStrength","contextProblem","contextCompetitor","contextPromotion","contextGoal"].forEach(id => {
       const el = document.getElementById(id);
       if(el) el.addEventListener("input", renderAll);
