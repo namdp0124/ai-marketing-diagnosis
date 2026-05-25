@@ -518,6 +518,14 @@
     }
     .ai-output:empty{display:none}
     .ai-status{margin-top:10px;color:#64748b;font-size:13px;line-height:1.6}
+    .report-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin:14px 0;
+    }
+    .report-action-status{font-size:13px;color:#64748b;line-height:1.6}
     .hidden{display:none}
     @keyframes yejiFloat{
       0%,100%{transform:translateY(0)}
@@ -567,6 +575,19 @@
       .scale{grid-template-columns:1fr}
       h1{font-size:26px}
       .result-type{font-size:24px}
+    }
+    @media print{
+      body{background:#fff}
+      .side,.topbar,.preview,.nav,.report-actions,.ai-status{display:none !important}
+      .app,.stage{display:block}
+      .main{padding:0}
+      .panel,.report-card,.result-hero{box-shadow:none;border-color:#cbd5e1}
+      .step-card{padding:0;border:none}
+      .step-page.hidden{display:none !important}
+      .result-wrap{gap:10px}
+      .report-grid{grid-template-columns:1fr}
+      .report-card.full,.report-card{grid-column:auto;break-inside:avoid}
+      .result-character{display:none}
     }
   </style>
 </head>
@@ -659,6 +680,59 @@
                 <div class="choices" data-choice="salesChannel"></div>
               </div>
             </div>
+            <div class="market-panel group">
+              <div class="market-head">
+                <div>
+                  <div class="market-title">소상공인365 공공데이터</div>
+                  <div class="market-copy">선택한 업종과 상권을 기준으로 행정동 표본, 공식 업종 소분류 후보, 선택 반경 데이터를 함께 반영합니다.</div>
+                </div>
+                <span class="pill">상권 데이터</span>
+              </div>
+              <div class="grid">
+                <div class="field">
+                  <label for="marketDistrict">조회 행정구</label>
+                  <select id="marketDistrict">
+                    <option value="auto">상권 선택 기준 자동</option>
+                    <option value="동구">동구</option>
+                    <option value="서구">서구</option>
+                    <option value="남구">남구</option>
+                    <option value="북구">북구</option>
+                    <option value="광산구">광산구</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="marketDong">행정동명</label>
+                  <input id="marketDong" type="text" placeholder="예: 동명동, 치평동, 수완동" />
+                </div>
+              </div>
+              <details class="advanced-market">
+                <summary>정확한 반경 분석이 필요할 때만 열기</summary>
+                <div class="grid">
+                  <div class="field">
+                    <label for="marketLongitude">경도</label>
+                    <input id="marketLongitude" type="text" inputmode="decimal" placeholder="예: 126.9231" />
+                  </div>
+                  <div class="field">
+                    <label for="marketLatitude">위도</label>
+                    <input id="marketLatitude" type="text" inputmode="decimal" placeholder="예: 35.1495" />
+                  </div>
+                  <div class="field">
+                    <label for="marketRadius">반경</label>
+                    <select id="marketRadius">
+                      <option value="300">300m</option>
+                      <option value="500" selected>500m</option>
+                      <option value="1000">1km</option>
+                      <option value="1500">1.5km</option>
+                    </select>
+                  </div>
+                </div>
+              </details>
+              <div class="market-actions">
+                <button id="marketLoadBtn" type="button" class="btn blue">공공데이터 불러오기</button>
+                <div id="marketStatus" class="market-status">Vercel 환경변수 연결 후 조회할 수 있습니다.</div>
+              </div>
+              <div id="marketSummary" class="market-summary"></div>
+            </div>
           </div>
 
           <div id="stepContext" class="step-page hidden">
@@ -709,59 +783,6 @@
                   <option value="평일이나 비수기 매출을 보완하고 싶어요">평일이나 비수기 매출을 보완하고 싶어요</option>
                 </select>
               </div>
-              <div class="market-panel">
-                <div class="market-head">
-                  <div>
-                    <div class="market-title">소상공인365 공공데이터</div>
-                    <div class="market-copy">행정동 표본에 매장 좌표 반경 데이터와 공식 업종 소분류 후보를 함께 반영합니다.</div>
-                  </div>
-                  <span class="pill">상권 데이터</span>
-                </div>
-                <div class="grid">
-                  <div class="field">
-                    <label for="marketDistrict">조회 행정구</label>
-                    <select id="marketDistrict">
-                      <option value="auto">상권 선택 기준 자동</option>
-                      <option value="동구">동구</option>
-                      <option value="서구">서구</option>
-                      <option value="남구">남구</option>
-                      <option value="북구">북구</option>
-                      <option value="광산구">광산구</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label for="marketDong">행정동명</label>
-                    <input id="marketDong" type="text" placeholder="예: 동명동, 치평동, 수완동" />
-                  </div>
-                </div>
-                <details class="advanced-market">
-                  <summary>정확한 반경 분석이 필요할 때만 열기</summary>
-                  <div class="grid">
-                    <div class="field">
-                      <label for="marketLongitude">경도</label>
-                      <input id="marketLongitude" type="text" inputmode="decimal" placeholder="예: 126.9231" />
-                    </div>
-                    <div class="field">
-                      <label for="marketLatitude">위도</label>
-                      <input id="marketLatitude" type="text" inputmode="decimal" placeholder="예: 35.1495" />
-                    </div>
-                    <div class="field">
-                      <label for="marketRadius">반경</label>
-                      <select id="marketRadius">
-                        <option value="300">300m</option>
-                        <option value="500" selected>500m</option>
-                        <option value="1000">1km</option>
-                        <option value="1500">1.5km</option>
-                      </select>
-                    </div>
-                  </div>
-                </details>
-                <div class="market-actions">
-                  <button id="marketLoadBtn" type="button" class="btn blue">공공데이터 불러오기</button>
-                  <div id="marketStatus" class="market-status">Vercel 환경변수 연결 후 조회할 수 있습니다.</div>
-                </div>
-                <div id="marketSummary" class="market-summary"></div>
-              </div>
             </div>
           </div>
 
@@ -808,6 +829,12 @@
                   <div id="resultScore" class="big">0</div>
                 </div>
                 <img class="result-character" src="assets/ye-g-character.gif" alt="예지 캐릭터" />
+              </div>
+              <div class="report-actions">
+                <button id="printReportBtn" type="button" class="btn secondary">리포트 저장/인쇄</button>
+                <button id="copyReportBtn" type="button" class="btn secondary">리포트 복사</button>
+                <button id="downloadReportBtn" type="button" class="btn secondary">텍스트 다운로드</button>
+                <span id="reportActionStatus" class="report-action-status"></span>
               </div>
 
               <div class="report-grid">
@@ -924,6 +951,18 @@
       "백운동/남구":"남구"
     };
 
+    const regionDongMap = {
+      "충장로/동명동":"동명동",
+      "상무지구":"치평동",
+      "첨단지구":"첨단1동",
+      "수완지구":"수완동",
+      "전대후문":"용봉동",
+      "양림동":"양림동",
+      "송정역":"송정동",
+      "봉선동":"봉선동",
+      "백운동/남구":"백운1동"
+    };
+
     const choiceOptions = {
       industry:["카페","음식점","뷰티","의류","학원","공방/소품","서비스","기타"],
       region:["광주 전체","충장로/동명동","상무지구","첨단지구","수완지구","전대후문","양림동","송정역","봉선동","백운동/남구"],
@@ -944,6 +983,45 @@
       "송정역": {type:"교통·방문객 상권", audience:"짧은 시간 안에 검색으로 고르는 이동 고객", tension:"빠르게 이해되지 않으면 위치가 좋아도 선택이 어렵습니다.", proof:"길찾기, 검색 후 방문, 대표 상품 판매 비중", mission:"검색 첫 화면에서 대표 상품과 소요 시간을 바로 보이게 하세요.", content:"역에서 몇 분 + 바로 먹는 대표 메뉴"},
       "봉선동": {type:"주거·교육 상권", audience:"신뢰와 지속성을 보고 고르는 학부모·가족 고객", tension:"성과와 후기 증거가 약하면 상담 전환이 어렵습니다.", proof:"상담 문의, 학부모 후기, 재등록/재방문", mission:"후기, 과정, 결과를 상담 전 한눈에 보이게 정리하세요.", content:"학부모가 궁금한 3가지 답변 콘텐츠"},
       "백운동/남구": {type:"생활밀착 상권", audience:"가까운 곳에서 편하고 익숙한 선택을 원하는 근거리 고객", tension:"현장 접근성과 쉬운 설명이 약하면 단골화가 느립니다.", proof:"전화 문의, 현장 재방문, 지역 고객 후기", mission:"전화·방문 전 고객이 바로 이해할 쉬운 안내 문구를 정비하세요.", content:"동네 고객용 쉬운 안내 콘텐츠"}
+    };
+
+    const regionLenses = {
+      "광주 전체": {base:"지역별 목적이 섞인 복합 생활권", caution:"광주 전체로 말하면 고객 상황이 넓어져 실행 문구가 흐려질 수 있습니다.", scenes:["생활권","목적 방문","온라인 검색"]},
+      "충장로/동명동": {base:"보행·문화·체류 목적이 섞인 중심 상권", caution:"사진 감도만 앞세우면 같은 분위기의 점포 사이에서 차이가 약해질 수 있습니다.", scenes:["친구와 방문","데이트/모임","저장 후 목적 방문"]},
+      "상무지구": {base:"업무·식사·야간 모임·생활 소비가 겹치는 복합 상권", caution:"직장인 상권 하나로 단정하면 업종별 구매 목적을 놓칠 수 있습니다.", scenes:["점심/퇴근 동선","저녁 모임","업무 중 빠른 비교","주말 생활 소비"]},
+      "첨단지구": {base:"직주근접·신도시 생활·직장 수요가 겹치는 상권", caution:"퇴근 고객만 보면 가족/주말/전문 서비스 수요가 빠질 수 있습니다.", scenes:["퇴근 후 루틴","주거 생활 소비","가족/주말 방문","직장인 반복 이용"]},
+      "수완지구": {base:"가족·생활·외식·교육 수요가 넓게 섞인 주거 상권", caution:"가족 고객만 보면 20~30대 개인 소비와 온라인 탐색 수요가 약해질 수 있습니다.", scenes:["가족 생활 소비","주말 외식/쇼핑","개인 취향 소비","후기 기반 선택"]},
+      "전대후문": {base:"대학가·청년 소비·가성비·재미가 강한 상권", caution:"학생만 보면 교직원, 인근 주민, 취향 소비 고객을 놓칠 수 있습니다.", scenes:["친구 추천","짧은 체류","가격/혜택 비교","SNS 공유"]},
+      "양림동": {base:"문화 산책·목적 방문·사진 기록 수요가 강한 상권", caution:"관광형 감성만 보면 재방문과 실제 구매 전환 장치가 약해질 수 있습니다.", scenes:["산책 동선","목적 방문","사진 기록","선물/체험"]},
+      "송정역": {base:"교통·이동·방문객·근거리 생활 수요가 겹치는 상권", caution:"이동 고객만 보면 동네 반복 고객과 예약형 수요가 빠질 수 있습니다.", scenes:["짧은 시간 검색","이동 전후 구매","근거리 생활 이용","대표 상품 즉시 이해"]},
+      "봉선동": {base:"교육·가족·주거 생활·프리미엄 소비가 섞인 상권", caution:"학부모만 보면 개인 취향 소비와 20~30대 생활 수요가 좁아질 수 있습니다.", scenes:["가족 신뢰","교육/상담","생활 편의","품질 비교"]},
+      "백운동/남구": {base:"생활밀착·근거리 재방문·동네 신뢰가 중요한 상권", caution:"동네 단골만 보면 신규 고객이 검색에서 이해할 첫 문장이 부족해질 수 있습니다.", scenes:["근거리 방문","전화 문의","반복 이용","쉬운 안내"]}
+    };
+
+    const industryRegionAngles = {
+      "카페": {choice:"대표 메뉴, 머무는 시간, 사진으로 남길 장면", risk:"공간 분위기만 말하면 메뉴 선택 이유가 약해집니다."},
+      "음식점": {choice:"먹는 상황, 메뉴 결정 속도, 동행 목적", risk:"맛있다는 말만 있으면 많은 음식점 사이에서 비교 기준이 약합니다."},
+      "뷰티": {choice:"시술 신뢰, 상담 과정, 유지 기간", risk:"전후 사진만 앞세우면 처음 방문하는 고객의 불안이 남습니다."},
+      "의류": {choice:"입을 상황, 취향, 체형/스타일 제안", risk:"상권의 유동인구보다 고객이 어떤 날 입을 옷인지가 더 중요합니다."},
+      "학원": {choice:"대상 학년, 상담 신뢰, 변화 사례", risk:"지역명보다 결과와 과정이 먼저 보이지 않으면 상담 전환이 약합니다."},
+      "공방/소품": {choice:"선물 목적, 체험 장면, 취향 발견", risk:"예쁜 상품만 보이면 구매/예약해야 할 이유가 약합니다."},
+      "서비스": {choice:"문제 해결 사례, 전문성 증거, 상담 진입 장벽", risk:"서비스 설명이 추상적이면 문의 전환이 늦어집니다."},
+      "기타": {choice:"대표 이득, 이용 상황, 반복 접점", risk:"무엇을 얻는지 한 문장으로 보이지 않으면 선택이 미뤄집니다."}
+    };
+
+    const customerAngles = {
+      "10대":"친구 추천, 가격 체감, 짧은 영상 반응",
+      "20대":"취향 표현, 저장 가치, SNS 공유",
+      "30대":"시간 효율, 품질 대비 가격, 후기 확인",
+      "40대":"신뢰, 가족/업무 일정과의 맞음, 재방문 편의",
+      "50대 이상":"쉬운 안내, 전화/현장 신뢰, 반복 이용 안정감",
+      "다양함":"첫 방문자가 바로 이해할 대표 이용 상황"
+    };
+
+    const operationAngles = {
+      "오프라인":"입구, 동선, 현장 안내, 직원 응대가 선택을 좌우합니다.",
+      "온라인":"사진, 상세 설명, 문의 응답, 구매/예약 흐름이 선택을 좌우합니다.",
+      "혼합":"현장에서 팔리는 이유와 온라인 첫 문장이 같아야 전환이 끊기지 않습니다."
     };
 
     const industryGuides = {
@@ -997,6 +1075,27 @@
     function guideRegion(){ return regionGuides[profile.region] || regionGuides["광주 전체"]; }
     function guideChannel(){ return channelGuides[profile.salesChannel] || channelGuides["혼합"]; }
     function unique(items){ return [...new Set(items.filter(Boolean))]; }
+    function buildRegionContext(){
+      const base = guideRegion();
+      const lens = regionLenses[profile.region] || regionLenses["광주 전체"];
+      const industryAngle = industryRegionAngles[profile.industry] || industryRegionAngles["기타"];
+      const customerAngle = customerAngles[profile.customerGroup] || customerAngles["다양함"];
+      const operationAngle = operationAngles[profile.operationType] || operationAngles["혼합"];
+      const channel = guideChannel();
+      const scenes = lens.scenes.slice(0, 3).join(", ");
+      return {
+        ...base,
+        type: lens.base,
+        audience: `${profile.customerGroup} 고객의 ${industryAngle.choice}`,
+        tension: `${profile.region}은 ${scenes} 흐름이 겹칩니다. ${lens.caution} ${profile.industry}에서는 ${industryAngle.risk}`,
+        proof: unique([channel.kpis[0], "저장/문의/길찾기", base.proof]).join(", "),
+        mission: `${profile.industry} 고객이 ${customerAngle} 기준으로 고를 수 있게 첫 문구와 대표 사진을 맞추세요.`,
+        content: `${profile.region}의 한 가지 고객 흐름을 고르고 '${industryAngle.choice}'을 보여주는 콘텐츠`,
+        segmentAngle: `${profile.region} x ${profile.industry} x ${profile.customerGroup} x ${profile.salesChannel}`,
+        choiceMoment: `${profile.customerGroup} 고객이 ${channel.focus}에서 ${industryAngle.choice}을 확인하는 순간`,
+        operationAngle
+      };
+    }
     function escapeHtml(value){
       return String(value || "").replace(/[&<>"']/g, ch => ({
         "&":"&amp;",
@@ -1010,6 +1109,18 @@
       const select = document.getElementById("marketDistrict");
       const selected = select ? select.value : "auto";
       return selected === "auto" ? (regionDistrictMap[profile.region] || "동구") : selected;
+    }
+    function syncMarketDefaults(force){
+      const district = document.getElementById("marketDistrict");
+      const dong = document.getElementById("marketDong");
+      if(district && district.value !== "auto") district.value = "auto";
+      if(dong){
+        const knownDongs = Object.values(regionDongMap);
+        const suggested = regionDongMap[profile.region] || "";
+        if(force || !dong.value.trim() || knownDongs.includes(dong.value.trim())){
+          dong.value = suggested;
+        }
+      }
     }
     function marketEvidenceText(data){
       if(!data || !data.ok) return "";
@@ -1066,6 +1177,7 @@
             const previous = profile[key];
             profile[key] = option;
             if(previous !== option && (key === "industry" || key === "region")){
+              if(key === "region") syncMarketDefaults(true);
               clearMarketData("업종 또는 상권 선택이 바뀌었습니다. 공공데이터를 다시 불러오면 최신 조건으로 반영됩니다.");
             }
             renderChoiceGroups();
@@ -1198,7 +1310,7 @@
     function buildDiagnosis(){
       const scores = calculateScores();
       const weak = weakest(scores);
-      const region = guideRegion();
+      const region = buildRegionContext();
       const industry = guideIndustry();
       const channel = guideChannel();
       const context = collectBusinessContext();
@@ -1218,10 +1330,11 @@
       };
       const resultType = `${profile.region} ${profile.industry} ${typeMap[weak.key]}`;
       const position = `${profile.region}에서 ${profile.customerGroup}이 ${product}을 선택해야 할 이유를 '${strength}' 중심으로 고정`;
-      const summary = `${region.type}의 ${region.audience}에게는 ${industry.hook}이 먼저 보여야 합니다. 현재 병목은 ${weak.name}이며, ${channel.focus}을 기준으로 실행 루틴을 좁히는 것이 좋습니다.${publicEvidence ? ` 공공데이터로는 ${publicEvidence}입니다.` : ""}`;
+      const summary = `${region.type}에서 ${region.audience}에게는 ${industry.hook}이 먼저 보여야 합니다. 현재 병목은 ${weak.name}이며, ${region.choiceMoment}을 기준으로 실행 루틴을 좁히는 것이 좋습니다.${publicEvidence ? ` 공공데이터로는 ${publicEvidence}입니다.` : ""}`;
       const insight = [
-        `${profile.region}은 ${region.tension}`,
+        region.tension,
         `${profile.industry} 업종은 ${industry.trigger}이 매출 신호가 되므로, 단순 홍보보다 '${product}'을 선택해야 하는 이유를 증거로 보여줘야 합니다.`,
+        `${profile.operationType} 운영에서는 ${region.operationAngle}`,
         `지금 답답한 문제를 '${problem}'로 본다면, 먼저 바꿀 것은 전체 마케팅이 아니라 고객이 처음 보는 첫 문장과 첫 행동입니다.`,
         publicEvidence ? `공공데이터 기준 ${publicEvidence}이므로, 첫 화면에서 같은 업종과 구분되는 이유를 더 빠르게 보여줘야 합니다.` : ""
       ].filter(Boolean).join(" ");
@@ -1386,6 +1499,97 @@
       if(output) output.textContent = "";
     }
 
+    function buildReportText(){
+      renderResult();
+      const d = currentDiagnosis;
+      const aiOutput = document.getElementById("aiOutput");
+      const actions = d.actions.map((action, index) => `${index + 1}. ${action}`).join("\n");
+      const kpis = d.kpis.map(kpi => `- ${kpi}`).join("\n");
+      const market = d.publicDataContext
+        ? `${d.publicDataContext.area}\n${d.publicDataContext.summary}\n${d.publicDataContext.note || ""}`.trim()
+        : "소상공인365 공공데이터를 아직 불러오지 않았습니다.";
+      const aiText = aiOutput && aiOutput.textContent.trim()
+        ? `\n\n[예지 AI 확장 리포트]\n${aiOutput.textContent.trim()}`
+        : "";
+
+      return [
+        "예지 로컬 마케팅 실행 리포트",
+        "",
+        `[진단 유형] ${d.resultType}`,
+        `[실행 준비도] ${d.scores.overall}점`,
+        `[사업 정보] ${d.profile.region} · ${d.profile.industry} · ${d.profile.operationType} · ${d.profile.customerGroup} · ${d.profile.salesChannel}`,
+        "",
+        "[핵심 판단]",
+        d.resultInsight,
+        "",
+        "[한 줄 포지션]",
+        d.position,
+        "",
+        "[오늘 바로 쓸 문구]",
+        `플레이스: ${d.copy.place}`,
+        `SNS: ${d.copy.sns}`,
+        `현장: ${d.copy.field}`,
+        "",
+        "[이번 주 실행 미션]",
+        actions,
+        "",
+        "[추천 KPI]",
+        kpis,
+        "",
+        "[공공데이터 상권 근거]",
+        market,
+        aiText
+      ].join("\n");
+    }
+
+    function setReportActionStatus(message){
+      const status = document.getElementById("reportActionStatus");
+      if(status) status.textContent = message;
+    }
+
+    function printReport(){
+      goStep(steps.length - 1);
+      setReportActionStatus("인쇄 창을 여는 중입니다.");
+      setTimeout(() => {
+        window.print();
+        setReportActionStatus("인쇄 창에서 PDF로 저장할 수 있습니다.");
+      }, 250);
+    }
+
+    async function copyReport(){
+      const text = buildReportText();
+      try {
+        await navigator.clipboard.writeText(text);
+        setReportActionStatus("리포트를 복사했습니다.");
+      } catch (error) {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        temp.setAttribute("readonly", "");
+        temp.style.position = "fixed";
+        temp.style.opacity = "0";
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand("copy");
+        temp.remove();
+        setReportActionStatus("리포트를 복사했습니다.");
+      }
+    }
+
+    function downloadReport(){
+      const text = buildReportText();
+      const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `yeji-report-${date}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setReportActionStatus("텍스트 리포트를 저장했습니다.");
+    }
+
     async function loadMarketData(){
       const button = document.getElementById("marketLoadBtn");
       const status = document.getElementById("marketStatus");
@@ -1490,6 +1694,9 @@
     document.getElementById("prevBtn").addEventListener("click", handlePrev);
     document.getElementById("nextBtn").addEventListener("click", handleNext);
     document.getElementById("aiGenerateBtn").addEventListener("click", generateAiDiagnosis);
+    document.getElementById("printReportBtn").addEventListener("click", printReport);
+    document.getElementById("copyReportBtn").addEventListener("click", copyReport);
+    document.getElementById("downloadReportBtn").addEventListener("click", downloadReport);
     document.getElementById("marketLoadBtn").addEventListener("click", loadMarketData);
     document.getElementById("marketDistrict").addEventListener("change", () => clearMarketData("조회 행정구가 바뀌었습니다. 공공데이터를 다시 불러오세요."));
     document.getElementById("marketDong").addEventListener("input", () => clearMarketData("행정동명이 바뀌었습니다. 공공데이터를 다시 불러오세요."));
@@ -1506,6 +1713,7 @@
 
     renderChoiceGroups();
     renderQuestions();
+    syncMarketDefaults(false);
     renderMarketSummary();
     goStep(0);
   </script>
