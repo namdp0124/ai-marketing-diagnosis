@@ -41,6 +41,15 @@ function countBy(items, getter) {
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ko"));
 }
 
+function parseNumber(value) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
+function hasCoordinates(payload) {
+  return parseNumber(payload.longitude) !== null && parseNumber(payload.latitude) !== null;
+}
+
 const DISTRICTS = {
   "동구": "29110",
   "서구": "29140",
@@ -79,6 +88,13 @@ function resolveDistrictName(payload) {
 }
 
 function matchesIndustry(item, industry) {
+  return matchesIndustryWithCodes(item, industry, []);
+}
+
+function matchesIndustryWithCodes(item, industry, industryCodes) {
+  const codeSet = new Set(industryCodes.map(code => code.code).filter(Boolean));
+  if (codeSet.size && codeSet.has(compact(item.indsSclsCd, ""))) return true;
+
   const keywords = INDUSTRY_KEYWORDS[industry] || [];
   if (!keywords.length) return false;
   const text = [
@@ -99,18 +115,12 @@ function buildDensityLabel(count, sampleSize) {
   return "낮음";
 }
 
-async function fetchPage({ serviceKey, districtCode, pageNo }) {
-  const endpoint = "https://apis.data.go.kr/B553077/api/open/sdsc2/storeListInDong";
+async function fetchApi({ serviceKey, path, params }) {
+  const endpoint = `https://apis.data.go.kr/B553077/api/open/sdsc2/${path}`;
   const encodedServiceKey = serviceKey.includes("%") ? serviceKey : encodeURIComponent(serviceKey);
-  const params = new URLSearchParams({
-    divId: "signguCd",
-    key: districtCode,
-    pageNo: String(pageNo),
-    numOfRows: "1000",
-    type: "json"
-  });
+  const searchParams = new URLSearchParams({ ...params, type: "json" });
 
-  const response = await fetch(`${endpoint}?serviceKey=${encodedServiceKey}&${params.toString()}`);
+  const response = await fetch(`${endpoint}?serviceKey=${encodedServiceKey}&${searchParams.toString()}`);
   const text = await response.text();
   let data;
   try {
@@ -131,6 +141,110 @@ async function fetchPage({ serviceKey, districtCode, pageNo }) {
   }
 
   return data;
+}
+
+async function fetchPagedItems({ serviceKey, path, params, maxPages }) {
+  const firstPage = await fetchApi({
+    serviceKey,
+    path,
+    params: { ...params, pageNo: "1", numOfRows: "1000" }
+  });
+  const firstBody = getBody(firstPage);
+  const totalCount = Number(firstBody.totalCount || 0);
+  let items = normalizeItems(firstPage);
+
+  const totalPages = Math.ceil(totalCount / 1000);
+  const pagesToFetch = Math.min(maxPages, totalPages || 1);
+  for (let pageNo = 2; pageNo <= pagesToFetch; pageNo += 1) {
+    const pageData = await fetchApi({
+      serviceKey,
+      path,
+      params: { ...params, pageNo: String(pageNo), numOfRows: "1000" }
+    });
+    items = items.concat(normalizeItems(pageData));
+  }
+
+  return {
+    items,
+    totalCount,
+    header: getHeader(firstPage),
+    pagesFetched: pagesToFetch
+  };
+}
+
+async function fetchIndustryCodes(serviceKey, industry) {
+  const keywords = INDUSTRY_KEYWORDS[industry] || [];
+  if (!keywords.length) return [];
+
+  try {
+    const data = await fetchApi({
+      serviceKey,
+      path: "smallUpjongList",
+      params: { pageNo: "1", numOfRows: "1000" }
+    });
+    return normalizeItems(data)
+      .map(item => {
+        const name = compact(item.indsSclsNm, "");
+        const text = [item.indsLclsNm, item.indsMclsNm, item.indsSclsNm].filter(Boolean).join(" ");
+        const score = keywords.reduce((sum, keyword) => sum + (text.includes(keyword) ? 1 : 0), 0);
+        return {
+          code: compact(item.indsSclsCd, ""),
+          name,
+          middleName: compact(item.indsMclsNm, ""),
+          largeName: compact(item.indsLclsNm, ""),
+          score
+        };
+      })
+      .filter(item => item.code && item.score > 0)
+      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "ko"))
+      .slice(0, 10);
+  } catch (error) {
+    return [];
+  }
+}
+
+async function fetchNearbyZones({ serviceKey, longitude, latitude, radius }) {
+  try {
+    const data = await fetchApi({
+      serviceKey,
+      path: "storeZoneInRadius",
+      params: {
+        cx: String(longitude),
+        cy: String(latitude),
+        radius: String(radius),
+        pageNo: "1",
+        numOfRows: "20"
+      }
+    });
+    return normalizeItems(data).slice(0, 6).map(item => ({
+      id: compact(item.trarNo || item.trdarNo || item.mainTrarNo, ""),
+      name: compact(item.mainTrarNm || item.trarNm || item.trdarNm || item.signguNm || item.adongNm, "상권명 미확인"),
+      district: compact(item.signguNm || item.signguCd, ""),
+      type: compact(item.trarTypeNm || item.trdarTypeNm || item.ctprvnNm, "")
+    }));
+  } catch (error) {
+    return [];
+  }
+}
+
+function summarizeStores({ items, industry, industryCodes }) {
+  const sameIndustryItems = items.filter(item => matchesIndustryWithCodes(item, industry, industryCodes));
+  const topCategories = countBy(items, item => item.indsMclsNm || item.indsLclsNm).slice(0, 5);
+  return {
+    sampleCount: items.length,
+    sameIndustryCount: sameIndustryItems.length,
+    competitionDensity: buildDensityLabel(sameIndustryItems.length, items.length),
+    topCategories,
+    sampleStores: items.slice(0, 6).map(item => ({
+      name: compact(item.bizesNm, "상호명 없음"),
+      category: compact(item.indsMclsNm || item.indsSclsNm || item.indsLclsNm, "업종 미분류"),
+      smallCategory: compact(item.indsSclsNm, ""),
+      dong: compact(item.adongNm || item.ldongNm, ""),
+      address: compact(item.rdnmAdr || item.lnoAdr, ""),
+      longitude: compact(item.lon || item.longitude, ""),
+      latitude: compact(item.lat || item.latitude, "")
+    }))
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -168,35 +282,68 @@ module.exports = async function handler(req, res) {
   const districtCode = DISTRICTS[districtName];
   const dongName = compact(payload.dongName, "");
   const industry = compact(payload.industry, "기타");
+  const longitude = parseNumber(payload.longitude);
+  const latitude = parseNumber(payload.latitude);
+  const radius = Math.max(100, Math.min(3000, Math.round(parseNumber(payload.radius) || 500)));
   const maxPages = Math.max(1, Math.min(3, Number(process.env.SMALLBIZ365_MAX_PAGES) || 2));
 
   try {
-    const firstPage = await fetchPage({ serviceKey, districtCode, pageNo: 1 });
-    const firstBody = getBody(firstPage);
-    const totalCount = Number(firstBody.totalCount || 0);
-    let items = normalizeItems(firstPage);
-
-    const totalPages = Math.ceil(totalCount / 1000);
-    const pagesToFetch = Math.min(maxPages, totalPages || 1);
-    for (let pageNo = 2; pageNo <= pagesToFetch; pageNo += 1) {
-      const pageData = await fetchPage({ serviceKey, districtCode, pageNo });
-      items = items.concat(normalizeItems(pageData));
-    }
+    const industryCodes = await fetchIndustryCodes(serviceKey, industry);
+    const districtData = await fetchPagedItems({
+      serviceKey,
+      path: "storeListInDong",
+      params: { divId: "signguCd", key: districtCode },
+      maxPages
+    });
+    const totalCount = districtData.totalCount;
+    const items = districtData.items;
 
     const filteredItems = dongName
       ? items.filter(item => compact(item.adongNm, "").includes(dongName) || compact(item.ldongNm, "").includes(dongName) || compact(item.rdnmAdr, "").includes(dongName) || compact(item.lnoAdr, "").includes(dongName))
       : items;
     const targetItems = filteredItems.length ? filteredItems : items;
-    const sameIndustryItems = targetItems.filter(item => matchesIndustry(item, industry));
-    const topCategories = countBy(targetItems, item => item.indsMclsNm || item.indsLclsNm).slice(0, 5);
+    const administrative = summarizeStores({ items: targetItems, industry, industryCodes });
     const topDongs = countBy(items, item => item.adongNm).slice(0, 5);
-    const header = getHeader(firstPage);
+    const header = districtData.header;
     const areaName = dongName ? `${districtName} ${dongName}` : districtName;
-    const density = buildDensityLabel(sameIndustryItems.length, targetItems.length);
-    const categoryText = topCategories.map(item => `${item.name} ${item.count}개`).join(", ") || "분류 데이터 없음";
+    let primary = administrative;
+    let radiusAnalysis = null;
+    let nearbyZones = [];
+
+    if (longitude !== null && latitude !== null) {
+      const radiusData = await fetchPagedItems({
+        serviceKey,
+        path: "storeListInRadius",
+        params: {
+          radius: String(radius),
+          cx: String(longitude),
+          cy: String(latitude)
+        },
+        maxPages
+      });
+      radiusAnalysis = {
+        ...summarizeStores({ items: radiusData.items, industry, industryCodes }),
+        radiusMeters: radius,
+        totalCount: radiusData.totalCount,
+        pagesFetched: radiusData.pagesFetched
+      };
+      primary = radiusAnalysis.sampleCount ? radiusAnalysis : primary;
+      nearbyZones = await fetchNearbyZones({ serviceKey, longitude, latitude, radius });
+    }
+
+    const categoryText = primary.topCategories.map(item => `${item.name} ${item.count}개`).join(", ") || "분류 데이터 없음";
     const sampleNote = targetItems.length === filteredItems.length && dongName
       ? `${areaName} 표본 ${targetItems.length}개`
       : `${districtName} 표본 ${targetItems.length}개`;
+    const radiusText = radiusAnalysis
+      ? ` 매장 좌표 기준 반경 ${radius}m 표본 ${radiusAnalysis.sampleCount}개 중 ${industry} 유사 업소 ${radiusAnalysis.sameIndustryCount}개, 경쟁 밀도는 ${radiusAnalysis.competitionDensity}입니다.`
+      : "";
+    const codeText = industryCodes.length
+      ? ` 공식 업종 소분류 후보는 ${industryCodes.slice(0, 3).map(item => item.name).join(", ")}입니다.`
+      : "";
+    const zoneText = nearbyZones.length
+      ? ` 주변 상권 후보는 ${nearbyZones.map(zone => zone.name).join(", ")}입니다.`
+      : "";
 
     return sendJson(res, 200, {
       ok: true,
@@ -208,24 +355,34 @@ module.exports = async function handler(req, res) {
         districtCode,
         dongName,
         industry,
-        pagesFetched: pagesToFetch
+        longitude,
+        latitude,
+        radius,
+        pagesFetched: districtData.pagesFetched
       },
+      analysisMode: radiusAnalysis ? "radius" : "administrative",
       totalCount,
-      sampleCount: targetItems.length,
-      sameIndustryCount: sameIndustryItems.length,
-      competitionDensity: density,
-      topCategories,
+      sampleCount: primary.sampleCount,
+      sameIndustryCount: primary.sameIndustryCount,
+      competitionDensity: primary.competitionDensity,
+      topCategories: primary.topCategories,
       topDongs,
-      sampleStores: targetItems.slice(0, 6).map(item => ({
-        name: compact(item.bizesNm, "상호명 없음"),
-        category: compact(item.indsMclsNm || item.indsSclsNm || item.indsLclsNm, "업종 미분류"),
-        dong: compact(item.adongNm || item.ldongNm, ""),
-        address: compact(item.rdnmAdr || item.lnoAdr, "")
-      })),
-      summary: `${sampleNote} 기준 ${industry} 유사 업소 ${sameIndustryItems.length}개가 잡혔고, 경쟁 밀도는 ${density}으로 보입니다. 주요 업종은 ${categoryText}입니다.`,
+      sampleStores: primary.sampleStores,
+      industryCodes,
+      administrative: {
+        areaName,
+        sampleCount: administrative.sampleCount,
+        sameIndustryCount: administrative.sameIndustryCount,
+        competitionDensity: administrative.competitionDensity,
+        topCategories: administrative.topCategories,
+        sampleStores: administrative.sampleStores
+      },
+      radiusAnalysis,
+      nearbyZones,
+      summary: `${sampleNote} 기준 ${industry} 유사 업소 ${administrative.sameIndustryCount}개가 잡혔고, 경쟁 밀도는 ${administrative.competitionDensity}으로 보입니다.${radiusText} 주요 업종은 ${categoryText}입니다.${codeText}${zoneText}`,
       note: dongName && !filteredItems.length
         ? "입력한 행정동명이 표본에 없어 행정구 표본으로 요약했습니다."
-        : "총 업소 수는 행정구 기준이며, 업종/행정동 분석은 조회 표본 기준입니다."
+        : "총 업소 수는 행정구 기준이며, 업종/행정동/반경 분석은 조회 표본 기준입니다."
     });
   } catch (error) {
     return sendJson(res, 502, {
