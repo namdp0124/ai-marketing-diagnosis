@@ -28,6 +28,7 @@ function buildPrompt(payload) {
   const regionContext = payload.regionContext || {};
   const industryContext = payload.industryContext || {};
   const channelContext = payload.channelContext || {};
+  const publicDataContext = payload.publicDataContext || {};
   const scores = payload.scores || {};
   const weakest = payload.weakest || {};
 
@@ -38,6 +39,7 @@ function buildPrompt(payload) {
       "금지어: '브랜딩 강화', 'SNS 활성화', '리뷰 관리', '콘텐츠를 꾸준히 올리세요'처럼 구체 행동이 없는 말.",
       "모든 제안은 지역, 업종, 고객층, 대표 상품/서비스, 현재 고민 중 최소 3개 이상을 엮어야 한다.",
       "지역 정보는 제공된 지역 맥락을 기준으로 해석하고, 실제 통계나 특정 경쟁 점포 상황을 아는 것처럼 단정하지 않는다.",
+      "공공데이터 맥락이 제공되면 해당 수치와 기준월을 근거로 쓰되, 표본 데이터는 전체 시장의 확정 통계처럼 과장하지 않는다.",
       "친근하지만 단호하게 쓴다. 과장, 투자 권유, 개발 과정 설명은 쓰지 않는다.",
       "한국어로 작성한다."
     ].join(" "),
@@ -74,6 +76,19 @@ function buildPrompt(payload) {
         focus: compact(channelContext.focus, "핵심 채널"),
         copy: compact(channelContext.copy, "첫 문구 정비")
       },
+      publicDataContext: publicDataContext && publicDataContext.summary ? {
+        source: compact(publicDataContext.source, "소상공인시장진흥공단 상가(상권)정보 API"),
+        standardMonth: compact(publicDataContext.standardMonth, "기준년월 미확인"),
+        area: compact(publicDataContext.area, "조회 지역 미확인"),
+        totalStores: publicDataContext.totalStores || 0,
+        sampleStores: publicDataContext.sampleStores || 0,
+        sameIndustryStores: publicDataContext.sameIndustryStores || 0,
+        competitionDensity: compact(publicDataContext.competitionDensity, "판단 보류"),
+        topCategories: Array.isArray(publicDataContext.topCategories) ? publicDataContext.topCategories.slice(0, 5) : [],
+        topDongs: Array.isArray(publicDataContext.topDongs) ? publicDataContext.topDongs.slice(0, 5) : [],
+        summary: compact(publicDataContext.summary, "공공데이터 요약 없음"),
+        note: compact(publicDataContext.note, "표본 기준으로 해석")
+      } : null,
       currentRuleBasedReport: {
         resultType: payload.resultType,
         summary: payload.resultSummary,
@@ -91,6 +106,7 @@ function buildPrompt(payload) {
         "기존 리포트 문장을 복사하지 말고, 더 구체적인 문구와 실행으로 확장해라.",
         "문장마다 가능한 한 명사와 행동을 넣어라. 예: '대표 사진 3장 교체', '플레이스 첫 줄 수정', '리뷰 답글 5개 작성'.",
         "입력값이 미입력인 부분은 억지로 꾸미지 말고, 업종·지역 기준의 기본 실행으로 대체해라.",
+        "publicDataContext가 null이 아니면 '이 상권에서 먹히는 각도' 또는 '오늘 바로 바꿀 3가지' 중 한 곳에 공공데이터 근거를 자연스럽게 반영해라.",
         "반드시 마지막 '버릴 선택지'까지 완성해라. 각 항목은 짧고 밀도 있게 쓰고, 전체 답변은 2200~2800자 안에 맞춰라.",
         "",
         "예지의 냉정한 판단",
