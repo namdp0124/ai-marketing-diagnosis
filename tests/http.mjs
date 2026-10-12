@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 const base='http://127.0.0.1:4173';
-for(const route of ['/','/diagnosis','/diagnosis/']){
+for(const route of ['/','/diagnosis.html','/diagnosis','/diagnosis/']){
  const response=await fetch(base+route);assert.equal(response.status,200);
  const html=await response.text();assert(!/ye-g-character\.gif|ye-g-intro\.png/.test(html));
+ if(route==='/'){
+  assert.equal([...html.matchAll(/href="\/diagnosis\.html"/g)].length,6);
+  assert(!html.includes('href="/diagnosis"'));
+ }
  const resources=[...html.matchAll(/(?:src|href)="(\/(?:styles|scripts|assets)[^"]+)"/g)].map(m=>m[1]);
  for(const src of new Set(resources))assert.equal((await fetch(base+src,{method:'HEAD'})).status,200,src);
 }

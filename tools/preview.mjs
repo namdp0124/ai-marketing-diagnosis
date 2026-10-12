@@ -43,6 +43,8 @@ const server = http.createServer(async (req, res) => {
     const headers = { 'Content-Type': mime[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
     if (file.endsWith('.html')) {
       let html = await readFile(file, 'utf8');
+      // Local preview uses the physical HTML path; deployed markup keeps /diagnosis.
+      if (file.endsWith('index.html')) html = html.replaceAll('href="/diagnosis"', 'href="/diagnosis.html"');
       if (mock && file.endsWith('diagnosis.html')) html = html.replace('<body>', '<body><div role="note" style="padding:10px 20px;background:#fff1c7;color:#453510;font:13px sans-serif">로컬 검증 모드 · 공공데이터와 AI는 모의 응답입니다. 실제 외부 API를 호출하지 않습니다.</div>');
       headers['Content-Length'] = Buffer.byteLength(html);
       res.writeHead(status, headers); return res.end(req.method === 'HEAD' ? undefined : html);
