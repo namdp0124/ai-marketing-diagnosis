@@ -1,0 +1,10 @@
+.DS_Store
+/.local/
+/tests/artifacts/
+/.vercel/
+.env*
+node_modules/
+# Preserve the original handoff copies locally, outside the development commits.
+/ai-marketing-diagnosis-ai-update/
+/ye-g-local-marketing-publicdata-update/
+/ye-g-local-marketing-publicdata-update.zip

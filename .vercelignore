@@ -1,0 +1,15 @@
+.git
+.DS_Store
+.local
+.env*
+node_modules
+ai-marketing-diagnosis-ai-update
+ye-g-local-marketing-publicdata-update
+ye-g-local-marketing-publicdata-update.zip
+assets/ye-g-character.gif
+assets/ye-g-intro.png
+assets/brand/media-manifest.json
+tools
+tests
+docs
+README.md

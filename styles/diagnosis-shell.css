@@ -1,0 +1,8 @@
+/* Isolated navigation and approved character presentation only. */
+.diagnosis-header{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:16px 24px;background:#f8f7f1;border-bottom:1px solid #d7e4dc;color:#253630}
+.diagnosis-header a{font-size:23px;font-weight:900;text-decoration:none;color:inherit;white-space:nowrap}.diagnosis-header a span{font-size:12px;font-weight:600;margin-left:12px}.diagnosis-header p{font-size:12px;margin:0;line-height:1.7}.diagnosis-header a:focus-visible{outline:3px solid #257f85;outline-offset:5px}.diagnosis-skip{position:absolute;top:-100px;left:20px;z-index:100;background:#253630;color:#fff;padding:14px}.diagnosis-skip:focus{top:10px}
+/* Higher specificity wins over retained inline styles. Never crop the approved still. */
+.app .avatar img,.app .side-character img,.app .preview-character img,.app .result-character,.app .intro-shot img{object-fit:contain;background:#fff;animation:none}
+.app .side-character img{aspect-ratio:1 / 1}.app .intro-shot img{height:auto;aspect-ratio:1 / 1}.app .avatar img{height:100%}
+@media(max-width:720px){.diagnosis-header{padding:14px 16px;display:block}.diagnosis-header p{margin-top:8px;font-size:11px}}
+@media print{.diagnosis-header,.diagnosis-skip{display:none!important}}
