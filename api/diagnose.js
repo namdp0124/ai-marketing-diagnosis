@@ -1,0 +1,242 @@
+function sendJson(res, status, payload) {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify(payload));
+}
+
+function getOutputText(data) {
+  if (typeof data.output_text === "string") return data.output_text.trim();
+  if (!Array.isArray(data.output)) return "";
+
+  return data.output
+    .flatMap(item => Array.isArray(item.content) ? item.content : [])
+    .map(part => part.text || part.output_text || "")
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+}
+
+function compact(value, fallback) {
+  if (typeof value !== "string") return fallback;
+  const trimmed = value.trim();
+  return trimmed || fallback;
+}
+
+function buildPrompt(payload) {
+  const profile = payload.profile || {};
+  const context = payload.businessContext || {};
+  const regionContext = payload.regionContext || {};
+  const industryContext = payload.industryContext || {};
+  const channelContext = payload.channelContext || {};
+  const publicDataContext = payload.publicDataContext || {};
+  const scores = payload.scores || {};
+  const weakest = payload.weakest || {};
+
+  return {
+    system: [
+      "너는 광주 로컬상권 마케팅 실행 코치 '예지'다.",
+      "너의 목표는 뻔한 마케팅 조언이 아니라, 점주가 오늘 바로 복사해서 쓸 수 있는 문구와 7일 실행표를 만드는 것이다.",
+      "금지어: '브랜딩 강화', 'SNS 활성화', '리뷰 관리', '콘텐츠를 꾸준히 올리세요'처럼 구체 행동이 없는 말.",
+      "모든 제안은 지역, 업종, 고객층, 대표 상품/서비스, 현재 고민 중 최소 3개 이상을 엮어야 한다.",
+      "지역 정보는 제공된 지역 맥락을 기준으로 해석하고, 실제 통계나 특정 경쟁 점포 상황을 아는 것처럼 단정하지 않는다.",
+      "공공데이터 맥락이 제공되면 해당 수치와 기준월을 근거로 쓰되, 표본 데이터는 전체 시장의 확정 통계처럼 과장하지 않는다.",
+      "친근하지만 단호하게 쓴다. 과장, 투자 권유, 개발 과정 설명은 쓰지 않는다.",
+      "한국어로 작성한다."
+    ].join(" "),
+    user: JSON.stringify({
+      serviceContext: "광주형 AI 로컬상권 마케팅 진단·실행 서비스. 캐릭터 예지가 점포별 실행 미션, 콘텐츠 문구, 리뷰 답글, 이벤트 아이디어를 제안한다.",
+      businessProfile: {
+        industry: compact(profile.industry, "업종 미입력"),
+        region: compact(profile.region, "광주 전체"),
+        operationType: compact(profile.operationType, "혼합"),
+        businessYear: compact(profile.businessYear, "운영 기간 미입력"),
+        customerGroup: compact(profile.customerGroup, "고객층 미입력"),
+        salesChannel: compact(profile.salesChannel, "채널 미입력")
+      },
+      businessContext: {
+        product: compact(context.product, "대표 상품/서비스 미입력"),
+        strength: compact(context.strength, "매장 강점 미입력"),
+        problem: compact(context.problem, "현재 고민 미입력"),
+        competitor: compact(context.competitor, "주변 상황 체감 미입력"),
+        promotion: compact(context.promotion, "현재 홍보 방식 미입력"),
+        goal: compact(context.goal, "바꾸고 싶은 것 미입력")
+      },
+      localContext: {
+        type: compact(regionContext.type, "광주 로컬상권"),
+        audience: compact(regionContext.audience, "지역 고객"),
+        tension: compact(regionContext.tension, "상권 메시지가 흐릴 수 있음"),
+        proof: compact(regionContext.proof, "저장/문의/방문 전환"),
+        segmentAngle: compact(regionContext.segmentAngle, "지역 x 업종 x 고객층"),
+        choiceMoment: compact(regionContext.choiceMoment, "고객이 선택을 결정하는 순간"),
+        operationAngle: compact(regionContext.operationAngle, "운영 형태별 실행 포인트")
+      },
+      industryContext: {
+        trigger: compact(industryContext.trigger, "대표 가치"),
+        hook: compact(industryContext.hook, "선택 이유"),
+        event: compact(industryContext.event, "첫 이용 혜택")
+      },
+      channelContext: {
+        focus: compact(channelContext.focus, "핵심 채널"),
+        copy: compact(channelContext.copy, "첫 문구 정비")
+      },
+      publicDataContext: publicDataContext && publicDataContext.summary ? {
+        source: compact(publicDataContext.source, "소상공인시장진흥공단 상가(상권)정보 API"),
+        standardMonth: compact(publicDataContext.standardMonth, "기준년월 미확인"),
+        area: compact(publicDataContext.area, "조회 지역 미확인"),
+        analysisMode: compact(publicDataContext.analysisMode, "administrative"),
+        radiusMeters: publicDataContext.radiusMeters || null,
+        totalStores: publicDataContext.totalStores || 0,
+        sampleStores: publicDataContext.sampleStores || 0,
+        sameIndustryStores: publicDataContext.sameIndustryStores || 0,
+        competitionDensity: compact(publicDataContext.competitionDensity, "판단 보류"),
+        topCategories: Array.isArray(publicDataContext.topCategories) ? publicDataContext.topCategories.slice(0, 5) : [],
+        topDongs: Array.isArray(publicDataContext.topDongs) ? publicDataContext.topDongs.slice(0, 5) : [],
+        industryCodes: Array.isArray(publicDataContext.industryCodes) ? publicDataContext.industryCodes.slice(0, 5) : [],
+        nearbyZones: Array.isArray(publicDataContext.nearbyZones) ? publicDataContext.nearbyZones.slice(0, 5) : [],
+        administrative: publicDataContext.administrative || null,
+        radiusAnalysis: publicDataContext.radiusAnalysis || null,
+        radiusComparisons: Array.isArray(publicDataContext.radiusComparisons) ? publicDataContext.radiusComparisons.slice(0, 3) : [],
+        administrativeZones: Array.isArray(publicDataContext.administrativeZones) ? publicDataContext.administrativeZones.slice(0, 5) : [],
+        zoneAnalysis: publicDataContext.zoneAnalysis || null,
+        upjongBenchmark: publicDataContext.upjongBenchmark || null,
+        recentChanges: publicDataContext.recentChanges || null,
+        marketInsight: publicDataContext.marketInsight || null,
+        summary: compact(publicDataContext.summary, "공공데이터 요약 없음"),
+        note: compact(publicDataContext.note, "표본 기준으로 해석")
+      } : null,
+      currentRuleBasedReport: {
+        resultType: payload.resultType,
+        summary: payload.resultSummary,
+        insight: payload.resultInsight,
+        position: payload.position,
+        copy: payload.copy,
+        actions: payload.actions,
+        kpis: payload.kpis,
+        sprint: payload.sprint,
+        weakest,
+        scores
+      },
+      instruction: [
+        "아래 제목과 순서를 그대로 사용해라.",
+        "기존 리포트 문장을 복사하지 말고, 더 구체적인 문구와 실행으로 확장해라.",
+        "문장마다 가능한 한 명사와 행동을 넣어라. 예: '대표 사진 3장 교체', '플레이스 첫 줄 수정', '리뷰 답글 5개 작성'.",
+        "입력값이 미입력인 부분은 억지로 꾸미지 말고, 업종·지역 기준의 기본 실행으로 대체해라.",
+        "지역명 하나로 고객을 단정하지 말고 업종, 고객층, 판매 채널, 운영 형태를 함께 엮어라. 예: 의류라면 상무지구라도 '빠른 식사'가 아니라 '퇴근 후/주말에 입을 상황별 코디'처럼 해석해라.",
+        "publicDataContext가 null이 아니면 '이 상권에서 먹히는 각도' 또는 '오늘 바로 바꿀 3가지' 중 한 곳에 공공데이터 근거를 자연스럽게 반영해라.",
+        "radiusAnalysis와 nearbyZones가 있으면 행정동 전체보다 반경 데이터와 주변 상권 후보를 우선해서 마케팅 실행 방향을 좁혀라.",
+        "marketInsight가 있으면 상권 성격, 동일 업종 밀도, 기회 업종, 공략 고객, 추천 메시지, 주의할 점 중 최소 3개를 자연스럽게 반영해라.",
+        "recentChanges나 파일데이터 확장 메모는 현재 확인된 확정 통계처럼 쓰지 말고, 추가로 볼 수 있는 보조 단서로만 써라.",
+        "반드시 마지막 '버릴 선택지'까지 완성해라. 각 항목은 짧고 밀도 있게 쓰고, 전체 답변은 2200~2800자 안에 맞춰라.",
+        "",
+        "예지의 냉정한 판단",
+        "- 2문장. 왜 지금 이 매장은 같은 업종의 다른 매장과 구분이 약한지 설명.",
+        "",
+        "이 상권에서 먹히는 각도",
+        "- 고객이 어떤 순간에 이 매장을 선택할지 가설 2개.",
+        "",
+        "오늘 바로 바꿀 3가지",
+        "1.",
+        "2.",
+        "3.",
+        "",
+        "복사해서 쓸 문구",
+        "- 네이버 플레이스 첫 줄:",
+        "- SNS 게시글:",
+        "- 현장 안내:",
+        "- 리뷰 답글:",
+        "",
+        "7일 실행표",
+        "1일차:",
+        "2일차:",
+        "3일차:",
+        "4일차:",
+        "5일차:",
+        "6일차:",
+        "7일차:",
+        "",
+        "이번 주에 볼 숫자",
+        "- KPI 4개. 각 KPI마다 왜 보는지 1줄.",
+        "",
+        "버릴 선택지",
+        "- 지금 하지 말아야 할 일 2개와 이유."
+      ].join("\n")
+    })
+  };
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (req.method !== "POST") {
+    return sendJson(res, 405, { error: "POST 요청만 사용할 수 있습니다." });
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    return sendJson(res, 500, { error: "Vercel 환경변수 OPENAI_API_KEY가 아직 등록되지 않았습니다." });
+  }
+
+  let payload = req.body;
+  if (typeof payload === "string") {
+    try {
+      payload = JSON.parse(payload);
+    } catch (error) {
+      return sendJson(res, 400, { error: "요청 데이터를 읽을 수 없습니다." });
+    }
+  }
+
+  if (!payload || typeof payload !== "object" || !payload.profile || !payload.scores) {
+    return sendJson(res, 400, { error: "진단에 필요한 사업 정보가 부족합니다." });
+  }
+
+  const prompt = buildPrompt(payload);
+  const requestedMaxOutput = Number(process.env.OPENAI_MAX_OUTPUT_TOKENS);
+  const maxOutputTokens = Number.isFinite(requestedMaxOutput)
+    ? Math.max(2200, Math.min(5000, Math.round(requestedMaxOutput)))
+    : 3600;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL || "gpt-5-mini",
+        input: [
+          { role: "system", content: [{ type: "input_text", text: prompt.system }] },
+          { role: "user", content: [{ type: "input_text", text: prompt.user }] }
+        ],
+        max_output_tokens: maxOutputTokens
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const message = data.error && data.error.message ? data.error.message : "AI 응답 생성에 실패했습니다.";
+      return sendJson(res, response.status, { error: message });
+    }
+
+    const result = getOutputText(data);
+    if (!result) {
+      return sendJson(res, 502, { error: "AI 응답을 읽을 수 없습니다." });
+    }
+
+    const incompleteReason = data.incomplete_details && data.incomplete_details.reason
+      ? data.incomplete_details.reason
+      : "";
+
+    return sendJson(res, 200, {
+      result,
+      incomplete: data.status === "incomplete",
+      reason: incompleteReason
+    });
+  } catch (error) {
+    return sendJson(res, 500, { error: "AI 진단 요청 중 문제가 발생했습니다." });
+  }
+};
