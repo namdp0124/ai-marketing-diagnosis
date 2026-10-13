@@ -1019,6 +1019,9 @@
     let currentStep = 0;
     let currentDiagnosis = null;
     let marketData = null;
+    let marketFetchState = "idle";
+    let marketErrorMessage = "";
+    const emptyMarketMessage = "선택한 조건에서 분석에 활용할 수 있는 상가업소 표본을 확인하지 못했습니다. 마케팅 진단은 입력한 점포 정보를 기준으로 계속 진행할 수 있습니다.";
 
     const profile = {
       industry:"카페",
@@ -1212,8 +1215,19 @@
         }
       }
     }
+    function hasUsableMarketData(data){
+      return !!data && data.ok === true && Number.isFinite(data.sampleCount) && data.sampleCount > 0;
+    }
+    function marketAvailabilityMessage(){
+      if(marketFetchState === "empty") return emptyMarketMessage;
+      if(marketFetchState === "error"){
+        const detail = marketErrorMessage && marketErrorMessage !== "공공데이터 조회에 실패했습니다." ? ` ${marketErrorMessage}` : "";
+        return `공공데이터 조회에 실패했습니다.${detail} 마케팅 진단은 입력한 점포 정보를 기준으로 계속 진행할 수 있습니다.`;
+      }
+      return "소상공인365 데이터를 불러오면 동일 업종 밀도와 주요 업종 분포가 예지 리포트에 반영됩니다.";
+    }
     function marketEvidenceText(data){
-      if(!data || !data.ok) return "";
+      if(!hasUsableMarketData(data)) return "";
       const area = data.analysisMode === "radius" && data.query
         ? `${data.query.districtName} 반경 ${data.query.radius || 500}m`
         : data.query && data.query.dongName
@@ -1322,6 +1336,13 @@
       const summary = document.getElementById("marketSummary");
       if(!status || !summary) return;
 
+      if(marketFetchState === "empty" || marketFetchState === "error"){
+        summary.classList.remove("show");
+        summary.innerHTML = "";
+        status.textContent = marketAvailabilityMessage();
+        return;
+      }
+
       if(!marketData){
         summary.classList.remove("show");
         summary.innerHTML = "";
@@ -1385,6 +1406,8 @@
 
     function clearMarketData(message){
       marketData = null;
+      marketFetchState = "idle";
+      marketErrorMessage = "";
       renderMarketSummary(message);
     }
 
@@ -1438,7 +1461,7 @@
       const product = context.product || `대표 ${profile.industry} 상품`;
       const strength = context.strength || industry.trigger;
       const problem = context.problem || weak.name;
-      const publicData = marketData && marketData.ok ? marketData : null;
+      const publicData = hasUsableMarketData(marketData) ? marketData : null;
       const publicEvidence = marketEvidenceText(publicData);
       const publicInsight = publicData && publicData.marketInsight ? publicData.marketInsight : null;
       const publicAngle = publicInsight && publicInsight.characterLabel
@@ -1571,7 +1594,7 @@
           const radius = insight.radiusComparisonSummary || "";
           marketResultBox.textContent = `${d.publicDataContext.area} 기준 ${d.publicDataContext.summary} ${top ? `주요 분포: ${top}.` : ""} ${codes ? `공식 업종 후보: ${codes}.` : ""} ${zones ? `주변 상권 후보: ${zones}.` : ""} ${insight.characterLabel ? `상권 성격: ${insight.characterLabel}.` : ""} ${opportunities ? `기회 업종: ${opportunities}.` : ""} ${insight.targetCustomer ? `공략 고객: ${insight.targetCustomer}.` : ""} ${insight.recommendedMessage ? `추천 메시지: ${insight.recommendedMessage}.` : ""} ${radius ? `반경 비교: ${radius}.` : ""} ${insight.caution || ""} ${d.publicDataContext.note || ""}`;
         } else {
-          marketResultBox.textContent = "소상공인365 데이터를 불러오면 동일 업종 밀도와 주요 업종 분포가 예지 리포트에 반영됩니다.";
+          marketResultBox.textContent = marketAvailabilityMessage();
         }
       }
     }
@@ -1669,7 +1692,7 @@
           marketInsight && marketInsight.recentChangeSummary ? `최근 변화: ${marketInsight.recentChangeSummary}` : "",
           d.publicDataContext.note || ""
         ].filter(Boolean).join("\n").trim()
-        : "소상공인365 공공데이터를 아직 불러오지 않았습니다.";
+        : marketFetchState === "idle" ? "소상공인365 공공데이터를 아직 불러오지 않았습니다." : marketAvailabilityMessage();
       const aiText = aiOutput && aiOutput.textContent.trim()
         ? `\n\n[예지 AI 확장 리포트]\n${aiOutput.textContent.trim()}`
         : "";
@@ -1847,12 +1870,16 @@
         });
         const data = await response.json().catch(() => ({}));
         if(!response.ok) throw new Error(data.error || "공공데이터 조회에 실패했습니다.");
+        if(data.ok !== true || !Number.isFinite(data.sampleCount) || data.sampleCount < 0) throw new Error("공공데이터 응답을 확인할 수 없습니다.");
         marketData = data;
+        marketFetchState = hasUsableMarketData(data) ? "ready" : "empty";
+        marketErrorMessage = "";
         renderAll();
-        renderMarketSummary();
       } catch (error) {
         marketData = null;
-        renderMarketSummary(error.message || "상권 데이터 요청 중 문제가 발생했습니다.");
+        marketFetchState = "error";
+        marketErrorMessage = error.message || "상권 데이터 요청 중 문제가 발생했습니다.";
+        renderAll();
       } finally {
         button.disabled = false;
       }
