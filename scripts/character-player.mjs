@@ -10,7 +10,6 @@ export class CharacterPlayer {
     this.button = root.querySelector('[data-playback-toggle]');
     this.button.hidden = false;
     this.status = root.querySelector('[data-playback-status]');
-    this.counter = root.querySelector('[data-clip-number]');
     this.motion = matchMedia('(prefers-reduced-motion: reduce)');
     this.index = 0;
     this.active = 0;
@@ -143,7 +142,6 @@ export class CharacterPlayer {
       this.transitioning = false;
       this.root.dataset.playback = 'playing';
       this.root.dataset.clip = String(index + 1);
-      this.counter.textContent = String(index + 1).padStart(2, '0');
       this.button.textContent = '잠시 멈추기';
       this.button.setAttribute('aria-pressed', 'true');
       this.status.textContent = '예지와 눈을 맞춰보세요.';
