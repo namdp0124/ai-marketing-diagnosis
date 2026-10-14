@@ -42,9 +42,10 @@ assert(lastActions.every(row => !row.innerHTML.includes('<img')));
 const baselineIds = [...baseline.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]);
 const currentIds = new Set([...current.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
 assert(baselineIds.every(id => currentIds.has(id)));
-for (const file of ['api/diagnose.js','api/market-data.js']) assert.equal(readFileSync(file,'utf8'),execFileSync('git',['show',`30f34d8:${file}`],{encoding:'utf8'}));
+// The public-data endpoint is intentionally fixed; its request/response behavior is covered by market-query.mjs.
+for (const file of ['api/diagnose.js']) assert.equal(readFileSync(file,'utf8'),execFileSync('git',['show',`30f34d8:${file}`],{encoding:'utf8'}));
 for (const file of ['index.html','diagnosis.html','styles/site.css','styles/diagnosis-shell.css','scripts/character-player.mjs','scripts/character-media.mjs']) assert(!/ye-g-character\.gif|ye-g-intro\.png/.test(readFileSync(file,'utf8')));
-console.log(`PASS: ${cases} diagnosis fixtures, 192 exports, AI export, input escaping, ${baselineIds.length} retained DOM IDs, unchanged API files, no legacy references.`);
+console.log(`PASS: ${cases} diagnosis fixtures, 192 exports, AI export, input escaping, ${baselineIds.length} retained DOM IDs, unchanged AI API file, no legacy references.`);
 // Verify the preserved export handlers without OS dialogs or clipboard side effects.
 let copied = ''; let blob; let clicked = false; let revoked = false; const printModes = [];
 after.ctx.navigator = { clipboard: { writeText: async text => { copied = text; } } };

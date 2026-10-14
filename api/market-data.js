@@ -48,6 +48,7 @@ function countBy(items, getter) {
 }
 
 function parseNumber(value) {
+  if (value === null || value === undefined || (typeof value === "string" && !value.trim())) return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
 }
@@ -57,11 +58,12 @@ function hasCoordinates(payload) {
 }
 
 const DISTRICTS = {
-  "동구": "29110",
-  "서구": "29140",
-  "남구": "29155",
-  "북구": "29170",
-  "광산구": "29200"
+  // Official OpenAPI guide 260805, July 2026 code table (printed p. 102).
+  "동구": "12210",
+  "서구": "12240",
+  "남구": "12270",
+  "북구": "12300",
+  "광산구": "12330"
 };
 
 const REGION_TO_DISTRICT = {
@@ -125,8 +127,9 @@ const COMPLEMENTARY_RULES = {
 
 function resolveDistrictName(payload) {
   const requested = compact(payload.district, "");
-  if (DISTRICTS[requested]) return requested;
+  if (DISTRICTS[requested] || requested === "광주 전체") return requested;
   const region = compact(payload.region, "");
+  if (region === "광주 전체") return region;
   return REGION_TO_DISTRICT[region] || "동구";
 }
 
@@ -332,32 +335,32 @@ async function fetchPagedItems({ serviceKey, path, params, maxPages, allowNoData
 }
 
 async function fetchAdministrativeStores({ serviceKey, districtCode, maxPages }) {
-  const attempts = [
-    {
-      path: "baroApi",
-      params: { resId: "store", catId: "dong", divId: "signguCd", key: districtCode }
-    },
-    {
-      path: "storeListInDong",
-      params: { divId: "signguCd", key: districtCode }
-    }
-  ];
-
-  let lastResult = null;
-  for (const attempt of attempts) {
+  const districtCodes = districtCode ? [districtCode] : Object.values(DISTRICTS);
+  const results = [];
+  // Code 12 includes Jeonnam. Aggregate only Gwangju's five districts.
+  for (const code of districtCodes) {
     const result = await fetchPagedItems({
       serviceKey,
-      path: attempt.path,
-      params: attempt.params,
+      path: "storeListInDong",
+      params: { divId: "signguCd", key: code },
       maxPages,
       allowNoData: true
     });
-    if (result.items.length) {
-      return { ...result, sourcePath: attempt.path };
-    }
-    lastResult = { ...result, sourcePath: attempt.path };
+    results.push({ ...result, districtCode: code });
   }
-  return lastResult || { items: [], totalCount: 0, header: {}, pagesFetched: 0, sourcePath: "" };
+  return {
+    items: results.flatMap(result => result.items),
+    totalCount: results.reduce((sum, result) => sum + result.totalCount, 0),
+    pagesFetched: results.reduce((sum, result) => sum + result.pagesFetched, 0),
+    header: (results.find(result => result.items.length) || results[0]).header,
+    sourcePath: "storeListInDong",
+    districtCounts: results.map(result => ({
+      districtCode: result.districtCode,
+      totalCount: result.totalCount,
+      sampleCount: result.items.length,
+      pagesFetched: result.pagesFetched
+    }))
+  };
 }
 
 async function fetchIndustryCodes(serviceKey, industry) {
@@ -659,7 +662,7 @@ module.exports = async function handler(req, res) {
   }
 
   const districtName = resolveDistrictName(payload);
-  const districtCode = DISTRICTS[districtName];
+  const districtCode = DISTRICTS[districtName] || "";
   const dongName = compact(payload.dongName, "");
   const industry = compact(payload.industry, "기타");
   const longitude = parseNumber(payload.longitude);
@@ -724,7 +727,8 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const administrativeZones = await fetchZonesInAdmi({ serviceKey, districtCode });
+    // A city-wide summary must not fall through to a province-wide zone query.
+    const administrativeZones = districtCode ? await fetchZonesInAdmi({ serviceKey, districtCode }) : [];
     const zoneAnalysis = await fetchStoresInArea({
       serviceKey,
       zone: administrativeZones[0],
@@ -780,6 +784,8 @@ module.exports = async function handler(req, res) {
         region: compact(payload.region, ""),
         districtName,
         districtCode,
+        districtCodes: districtData.districtCounts.map(result => result.districtCode),
+        districtCounts: districtData.districtCounts,
         dongName,
         industry,
         longitude,
@@ -817,7 +823,7 @@ module.exports = async function handler(req, res) {
       note: dongName && !filteredItems.length
         ? "입력한 행정동명이 표본에 없어 행정구 표본으로 요약했습니다."
         : targetItems.length
-        ? "총 업소 수는 행정구 기준이며, 업종/행정동/반경 분석은 조회 표본 기준입니다."
+        ? `총 업소 수는 ${districtCode ? "행정구" : "광주 5개 구 합계"} 기준이며, 업종/행정동/반경 분석은 조회 표본 기준입니다.`
         : "해당 조건에서 공공데이터 표본이 없어 0개로 표시했습니다. 행정동명을 비우거나 행정구만 선택해 다시 조회해 보세요."
     });
   } catch (error) {
