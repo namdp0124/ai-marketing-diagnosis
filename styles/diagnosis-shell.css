@@ -111,7 +111,10 @@ h1 { font-size: clamp(28px, 2.5vw, 40px); letter-spacing: -.045em; line-height: 
 }
 #stepResult, #aiReport { scroll-margin-block-start: 24px; }
 @media screen {
-  #aiReport:has(.ai-readable:not(:empty)) { min-block-size: calc(100svh - 24px); }
+  #reportAiCta[data-ai-state="success"] ~ .report-grid #aiReport {
+    min-block-size: calc(100vh - 24px);
+    min-block-size: calc(100svh - 24px);
+  }
 }
 .report-app-handoff {
   padding: 18px 20px;
