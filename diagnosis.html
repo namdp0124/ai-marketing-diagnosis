@@ -10,7 +10,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/ye-g-favicon-v1-32.png">
   <link rel="icon" type="image/png" sizes="48x48" href="/assets/brand/ye-g-favicon-v1-48.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/brand/ye-g-apple-touch-icon-v1-180.png">
-  <link rel="stylesheet" href="/styles/diagnosis-shell.css" />
   <style>
     :root{
       --ink:#2f241f;
@@ -673,9 +672,11 @@
       }
     }
   </style>
+  <link rel="stylesheet" href="/styles/diagnosis-shell.css" />
+  <script type="module" src="/scripts/diagnosis-presentation.mjs"></script>
 </head>
 <body>
-  <a class="diagnosis-skip" href="#stepBasic">진단 입력으로 바로가기</a>
+  <a class="diagnosis-skip" href="#diagnosisWorkspace">진단 입력으로 바로가기</a>
   <header class="diagnosis-header"><a href="/" target="_blank" rel="noopener" aria-label="예지 공식 홈페이지 새 탭에서 열기">YE-G <span>공식 홈페이지 ↗</span></a><p>입력 내용은 이 탭에서만 유지됩니다. 새로고침하면 초기화됩니다.</p></header>
   <div class="app">
     <aside class="side">
@@ -685,19 +686,12 @@
           <span>예지</span>
         </div>
         <div>
-          <div class="brand-title">광주형 마케팅 툴</div>
-          <div class="brand-sub">진단보다 실행까지 보는 로컬상권 도우미</div>
+          <div class="brand-title">매장 마케팅 진단</div>
+          <div class="brand-sub">예지 YE-G</div>
         </div>
       </div>
-      <div class="side-note">
-        예지는 점수만 알려주지 않습니다. 입력한 매장 상황을 바탕으로 오늘 올릴 문구, 이번 주 미션, 리뷰 대응, 재방문 장치를 만들어줍니다.
-      </div>
-      <div class="side-character">
-        <img src="/assets/brand/ye-g-poster.webp" alt="예지 캐릭터" />
-        <div class="side-character-caption">YE-G가 매장 상황을 읽고 오늘의 실행 루트를 잡아줍니다.</div>
-      </div>
-      <div id="stepTabs" class="steps"></div>
-      <div class="side-metric">
+      <nav id="stepTabs" class="steps" aria-label="진단 단계"></nav>
+      <div class="side-metric" hidden>
         <div class="mini-card">
           <div class="mini-label">현재 선택</div>
           <div id="sideProfile" class="mini-value">카페 · 광주 전체</div>
@@ -709,17 +703,13 @@
       </div>
     </aside>
 
-    <main class="main">
+    <main class="main" id="diagnosisWorkspace" tabindex="-1">
       <div class="topbar">
         <div>
-          <div class="eyebrow">YE-G LOCAL ACTION DIAGNOSIS</div>
-          <h1>예지와 함께 매장 마케팅을 실행 단위로 진단합니다</h1>
-          <p class="top-desc">한 번에 다 묻지 않고, 사업 정보부터 상권 체감까지 단계별로 확인한 뒤 바로 쓸 수 있는 실행 리포트를 만듭니다.</p>
-          <div class="hero-tags">
-            <span class="hero-tag">광주의 빛</span>
-            <span class="hero-tag">데이터 구슬</span>
-            <span class="hero-tag">오늘 바로 실행</span>
-          </div>
+          <div class="eyebrow">광주 소상공인을 위한</div>
+          <h1>우리 매장, 어디부터 바꿀까요?</h1>
+          <p class="top-desc">매장 상황을 입력하고 이번 주 실행할 일을 정리하세요.</p>
+
         </div>
         <div class="progress">
           <span id="progressText">1 / 5</span>
@@ -733,9 +723,9 @@
             <div class="step-head">
               <div>
                 <h2 class="step-title">1. 사업 기본 정보</h2>
-                <p class="step-copy">업종, 상권, 고객층이 달라지면 같은 점수라도 실행 방향이 달라져야 합니다.</p>
+                <p class="step-copy">매장에 맞는 항목을 선택하세요.</p>
               </div>
-              <span class="pill">기초 분류</span>
+
             </div>
             <div class="group">
               <div class="label">업종</div>
@@ -769,9 +759,9 @@
               <div class="market-head">
                 <div>
                   <div class="market-title">소상공인365 공공데이터</div>
-                  <div class="market-copy">선택한 업종과 상권을 기준으로 행정동 표본, 공식 업종 소분류 후보, 선택 반경 데이터를 함께 반영합니다.</div>
+                  <div class="market-copy">소상공인시장진흥공단의 상가업소 표본으로 주변 업종 분포를 확인합니다.</div>
                 </div>
-                <span class="pill">상권 데이터</span>
+
               </div>
               <div class="grid">
                 <div class="field">
@@ -791,7 +781,7 @@
                 </div>
               </div>
               <details class="advanced-market">
-                <summary>정확한 반경 분석이 필요할 때만 열기</summary>
+                <summary>반경으로 조회하기</summary>
                 <div class="grid">
                   <div class="field">
                     <label for="marketLongitude">경도</label>
@@ -814,7 +804,7 @@
               </details>
               <div class="market-actions">
                 <button id="marketLoadBtn" type="button" class="btn blue">공공데이터 불러오기</button>
-                <div id="marketStatus" class="market-status">Vercel 환경변수 연결 후 조회할 수 있습니다.</div>
+                <div id="marketStatus" role="status" aria-live="polite" class="market-status"></div>
               </div>
               <div id="marketSummary" class="market-summary"></div>
             </div>
@@ -824,9 +814,9 @@
             <div class="step-head">
               <div>
                 <h2 class="step-title">2. 매장 상황 입력</h2>
-                <p class="step-copy">여기가 차별화의 재료입니다. 빈칸이 많으면 AI도 뻔한 조언을 할 수밖에 없습니다.</p>
+                <p class="step-copy">대표 상품과 현재 고민을 알려주세요.</p>
               </div>
-              <span class="pill">실행 재료</span>
+
             </div>
             <div class="grid">
               <div class="field">
@@ -875,9 +865,9 @@
             <div class="step-head">
               <div>
                 <h2 class="step-title">3. 마케팅 상태 체크</h2>
-                <p class="step-copy">검색, 콘텐츠, 전환, 리뷰, 재방문 장치가 실제로 돌아가는지 확인합니다.</p>
+                <p class="step-copy">각 항목이 현재 매장에 얼마나 해당하는지 선택하세요.</p>
               </div>
-              <span class="pill">마케팅 엔진</span>
+
             </div>
             <div id="marketingQuestions" class="question-list"></div>
           </div>
@@ -886,7 +876,7 @@
             <div class="step-head">
               <div>
                 <h2 class="step-title">4. 상권 체감 체크</h2>
-                <p class="step-copy">광주 로컬상권에서는 위치, 시간대, 경쟁 밀도, 현장 가시성이 결과를 크게 바꿉니다.</p>
+                <p class="step-copy">주변 상권과 매장의 현재 상황을 선택하세요.</p>
               </div>
               <span class="pill">로컬 맥락</span>
             </div>
@@ -897,9 +887,9 @@
             <div class="step-head">
               <div>
                 <h2 class="step-title">5. 예지 실행 리포트</h2>
-                <p class="step-copy">점수보다 중요한 것은 오늘 바로 바꿀 수 있는 문구, 미션, 지표입니다.</p>
+                <p class="step-copy">입력한 매장 상황을 바탕으로 정리한 실행안입니다.</p>
               </div>
-              <span class="pill">실행안 출력</span>
+
             </div>
             <div class="result-wrap">
               <div class="result-hero">
@@ -913,7 +903,6 @@
                   <div class="small">실행 준비도</div>
                   <div id="resultScore" class="big">0</div>
                 </div>
-                <img class="result-character" src="/assets/brand/ye-g-poster.webp" alt="예지 캐릭터" />
               </div>
               <div class="report-actions">
                 <label class="report-output-mode" for="reportExportMode">
@@ -927,39 +916,39 @@
                 <button id="printReportBtn" type="button" class="btn secondary">리포트 저장/인쇄</button>
                 <button id="copyReportBtn" type="button" class="btn secondary">리포트 복사</button>
                 <button id="downloadReportBtn" type="button" class="btn secondary">텍스트 다운로드</button>
-                <span id="reportActionStatus" class="report-action-status"></span>
+                <span id="reportActionStatus" role="status" aria-live="polite" class="report-action-status"></span>
               </div>
 
               <div class="report-grid">
                 <div class="report-card full">
-                  <div class="report-title">예지의 핵심 판단</div>
+                  <h3 class="report-title">예지의 핵심 판단</h3>
                   <div id="resultInsight" class="report-body"></div>
                 </div>
                 <div class="report-card">
-                  <div class="report-title">잡아야 할 한 줄 포지션</div>
+                  <h3 class="report-title">우리 매장의 선택 이유</h3>
                   <div id="positionBox" class="copy-box"></div>
                 </div>
                 <div class="report-card">
-                  <div class="report-title">오늘 바로 쓸 문구</div>
+                  <h3 class="report-title">오늘 바로 쓸 문구</h3>
                   <div id="copyBox" class="copy-box"></div>
                 </div>
                 <div class="report-card full">
-                  <div class="report-title">이번 주 실행 미션</div>
+                  <h3 class="report-title">이번 주 실행 미션</h3>
                   <div id="actionsBox" class="action-list"></div>
                 </div>
                 <div class="report-card full">
-                  <div class="report-title">추천 KPI</div>
+                  <h3 class="report-title">이번 주 확인할 지표</h3>
                   <div id="kpiBox" class="kpi-grid"></div>
                 </div>
                 <div class="report-card full">
-                  <div class="report-title">공공데이터 상권 근거</div>
+                  <h3 class="report-title">상권 데이터 참고</h3>
                   <div id="marketResultBox" class="report-body">소상공인365 데이터를 불러오면 동일 업종 밀도와 주요 업종 분포가 여기에 반영됩니다.</div>
                 </div>
                 <div class="report-card full">
-                  <div class="report-title">AI로 더 날카롭게 확장</div>
-                  <div class="report-body">예지가 만든 실행 리포트를 바탕으로 플레이스 문구, SNS 콘텐츠, 리뷰 답글, 7일 실행표를 더 구체화합니다.</div>
-                  <button id="aiGenerateBtn" type="button" class="btn blue" style="margin-top:12px">예지 AI 리포트 생성</button>
-                  <div id="aiStatus" class="ai-status">Vercel API 키가 연결되어 있으면 실제 AI 리포트가 생성됩니다.</div>
+                  <h3 class="report-title">맞춤 실행안</h3>
+                  <div class="report-body">소개 문구, 리뷰 답글과 7일 실행표를 만듭니다.</div>
+                  <button id="aiGenerateBtn" type="button" class="btn blue" style="margin-top:12px">AI 실행안 생성</button>
+                  <div id="aiStatus" role="status" aria-live="polite" class="ai-status"></div>
                   <div id="aiOutput" class="ai-output"></div>
                 </div>
               </div>
@@ -974,26 +963,19 @@
         </section>
 
         <aside class="panel preview">
-          <div class="preview-character">
-            <img src="/assets/brand/ye-g-poster.webp" alt="예지 캐릭터" />
-            <div>
-              <strong>YE-G</strong>
-              <span>광주의 따뜻한 빛과 데이터 구슬로 실행 포인트를 찾아요.</span>
-            </div>
-          </div>
-          <h3>예지 미리보기</h3>
-          <p>선택과 입력이 바뀌면 오른쪽 리포트 방향도 함께 바뀝니다.</p>
+          <h3>입력 내용 미리보기</h3>
+          <p>입력에 따라 달라지는 실행 방향입니다.</p>
           <div class="preview-list">
             <div class="preview-item">
               <div class="k">상권 해석</div>
               <div id="previewRegion" class="v">광주 전체 복합 생활권</div>
             </div>
             <div class="preview-item">
-              <div class="k">현재 병목</div>
+              <div class="k">먼저 개선할 부분</div>
               <div id="previewBottleneck" class="v">브랜딩 증거 부족</div>
             </div>
             <div class="preview-item">
-              <div class="k">오늘 미션</div>
+              <div class="k">첫 실행</div>
               <div id="previewMission" class="v">대표 상품을 한 문장으로 고정하기</div>
             </div>
             <div class="preview-item">
@@ -1001,10 +983,7 @@
               <div id="previewContent" class="v">대표 상품 사진 + 방문 이유</div>
             </div>
           </div>
-          <div class="intro-shot">
-            <img src="/assets/brand/ye-g-poster.webp" alt="예지 캐릭터 소개" />
-            <div class="intro-shot-caption">예지(YE-G): 광주의 빛과 데이터 구슬을 모티브로 한 로컬 마케팅 안내자</div>
-          </div>
+
         </aside>
       </div>
     </main>
@@ -1658,7 +1637,7 @@
     function markAiResultStale(){
       const status = document.getElementById("aiStatus");
       const output = document.getElementById("aiOutput");
-      if(status && status.dataset.loading !== "true") status.textContent = "예지 AI 리포트 생성 버튼을 누르면 더 구체적인 실행표가 표시됩니다.";
+      if(status && status.dataset.loading !== "true") status.textContent = "";
       if(output) output.textContent = "";
     }
 
@@ -1839,7 +1818,7 @@
       if(!button || !status) return;
 
       if(window.location.protocol === "file:"){
-        status.textContent = "공공데이터 조회는 Vercel 배포 주소에서 확인할 수 있습니다. 로컬 파일에서는 기본 리포트만 동작합니다.";
+        status.textContent = "공공데이터를 조회하려면 홈페이지에서 진단을 열어 주세요.";
         return;
       }
 
@@ -1895,14 +1874,14 @@
       const status = document.getElementById("aiStatus");
       const output = document.getElementById("aiOutput");
       if(window.location.protocol === "file:"){
-        status.textContent = "AI 기능은 Vercel 배포 주소에서 확인할 수 있습니다. 로컬 파일에서는 기본 예지 리포트만 동작합니다.";
+        status.textContent = "AI 실행안을 만들려면 홈페이지에서 진단을 열어 주세요.";
         return;
       }
 
       const payload = currentDiagnosis;
       button.disabled = true;
       status.dataset.loading = "true";
-      status.textContent = "예지가 실행 리포트를 더 날카롭게 만드는 중입니다.";
+      status.textContent = "맞춤 실행안을 만들고 있습니다.";
       output.textContent = "";
 
       try {
