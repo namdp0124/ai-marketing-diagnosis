@@ -674,20 +674,25 @@
   </style>
   <link rel="stylesheet" href="/styles/diagnosis-shell.css" />
   <script type="module" src="/scripts/diagnosis-presentation.mjs"></script>
+  <script type="module" src="/scripts/character-player.mjs"></script>
 </head>
 <body>
   <a class="diagnosis-skip" href="#diagnosisWorkspace">진단 입력으로 바로가기</a>
-  <header class="diagnosis-header"><a href="/" target="_blank" rel="noopener" aria-label="예지 공식 홈페이지 새 탭에서 열기">YE-G <span>공식 홈페이지 ↗</span></a><p>입력 내용은 이 탭에서만 유지됩니다. 새로고침하면 초기화됩니다.</p></header>
+  <header class="diagnosis-header"><a href="/" target="_blank" rel="noopener" aria-label="예지 공식 홈페이지 새 탭에서 열기">YE-G<img class="wordmark-face" src="/assets/brand/ye-g-header-logo.png" alt="" width="44" height="44"><span>공식 홈페이지 ↗</span></a><p>입력 내용은 이 탭에서만 유지됩니다. 새로고침하면 초기화됩니다.</p></header>
   <div class="app">
     <aside class="side">
-      <div class="brand">
-        <div class="avatar">
-          <img src="/assets/brand/ye-g-poster.webp" alt="" />
-          <span>예지</span>
+      <div class="diagnosis-character" data-character-player data-playback="poster">
+        <div class="diagnosis-character-frame" role="img" aria-label="민트색 빛의 구슬과 함께 인사하는 예지">
+          <div class="diagnosis-character-media">
+            <img data-character-poster src="/assets/brand/ye-g-poster.webp" width="1280" height="720" alt="">
+            <video muted playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video>
+            <video muted playsinline preload="none" aria-hidden="true" tabindex="-1" disablepictureinpicture></video>
+          </div>
         </div>
-        <div>
+        <div class="diagnosis-character-caption">
           <div class="brand-title">매장 마케팅 진단</div>
-          <div class="brand-sub">예지 YE-G</div>
+          <button type="button" data-playback-toggle hidden aria-pressed="false">애니메이션 재생</button>
+          <p class="diagnosis-playback-status" data-playback-status role="status" aria-live="polite"></p>
         </div>
       </div>
       <nav id="stepTabs" class="steps" aria-label="진단 단계"></nav>
