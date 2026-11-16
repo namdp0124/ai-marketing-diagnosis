@@ -1,6 +1,13 @@
 // Presentation only. The original text remains the source for every export.
 const raw = document.getElementById('aiOutput');
 const report = document.getElementById('aiReadable');
+const reportSection = document.getElementById('aiReport');
+document.querySelector('.report-ai-result-link').addEventListener('click', event => {
+  event.preventDefault();
+  if (!report.textContent) return;
+  reportSection.focus({ preventScroll: true });
+  reportSection.scrollIntoView({ block: 'start', behavior: 'instant' });
+});
 const headings = new Set([
   '예지의 냉정한 판단', '이 상권에서 먹히는 각도', '오늘 바로 바꿀 3가지',
   '복사해서 쓸 문구', '7일 실행표', '이번 주에 볼 숫자', '버릴 선택지'
