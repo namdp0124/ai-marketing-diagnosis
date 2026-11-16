@@ -15,7 +15,7 @@ assert.equal((await ai('GET',{})).status,405);
 assert.equal((await ai('POST','invalid')).status,400);
 assert.equal((await ai('POST',{})).status,400);
 const response=await ai('POST',{profile:{industry:'카페'},scores:{overall:60}});
-assert.equal(response.body.result,'모의 결과');assert.equal(calls.length,1);assert.equal(calls[0].url,'https://api.openai.com/v1/responses');assert.equal(calls[0].body.model,'gpt-5-mini');
+assert.equal(response.body.result,'모의 결과');assert.equal(calls.length,1);assert.equal(calls[0].url,'https://api.openai.com/v1/responses');assert.equal(calls[0].body.model,'gpt-6.1-sol');
 const missing=harness('api/diagnose.js',{},()=>{throw Error('Must not call upstream');});assert.equal((await missing('POST',{})).status,500);
 const limit=harness('api/diagnose.js',{OPENAI_API_KEY:'test'},async()=>({ok:false,status:429,json:async()=>({error:{message:'mock rate limit'}})}));assert.equal((await limit('POST',{profile:{},scores:{}})).status,429);
 let marketCalls=0;

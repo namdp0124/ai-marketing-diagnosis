@@ -206,7 +206,7 @@ module.exports = async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5-mini",
+        model: "gpt-6.1-sol",
         input: [
           { role: "system", content: [{ type: "input_text", text: prompt.system }] },
           { role: "user", content: [{ type: "input_text", text: prompt.user }] }
