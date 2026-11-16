@@ -58,6 +58,7 @@ const classes = new Set();
 after.document.body = { appendChild() {}, classList: { add:x=>classes.add(x), remove:x=>classes.delete(x) } };
 after.document.querySelector = () => element();
 after.document.createElement = tag => Object.assign(element(), { remove() {}, click() { clicked = true; }, setAttribute() {} });
+after.document.getElementById('stepResult').scrollIntoView = () => {};
 after.ctx.window = { scrollTo() {}, print() { printModes.push(classes.has('print-text-mode')); } };
 for (const mode of ['full','action','ai']) {
  after.document.getElementById('reportExportMode').value = mode;
@@ -70,3 +71,35 @@ for (const mode of ['full','action','ai']) {
 }
 assert.deepEqual(printModes,[false,true,true]);
 console.log('PASS: copy/TXT content and print modes for full, action, AI; object URL cleanup.');
+
+// Audit the proposed app handoff fields against the current diagnosis engine.
+// This projection is a synthetic fixture only. No browser or server stores it.
+const handoff = context(current);
+handoff.document.getElementById('contextProduct').value = '저장 범위에서 제외할 합성 이름';
+const snapshot = JSON.parse(vm.runInContext(`(() => {
+  Object.assign(profile, {
+    industry: '카페', region: '충장로/동명동', operationType: '오프라인',
+    businessYear: '1~3년', customerGroup: '30대', salesChannel: '현장 방문'
+  });
+  answers.competition_clear = 5;
+  const diagnosis = buildDiagnosis();
+  return JSON.stringify({
+    schemaVersion: 1,
+    profile: diagnosis.profile,
+    answers,
+    result: { scores: diagnosis.scores, type: diagnosis.resultType, priority: diagnosis.weakest },
+    recommendations: { channelFocus: diagnosis.channelContext.focus, kpis: diagnosis.kpis }
+  });
+})()`, handoff.ctx));
+assert.equal(snapshot.profile.region, '충장로/동명동');
+assert.equal(snapshot.profile.industry, '카페');
+assert.equal(Object.keys(snapshot.answers).length, 12);
+assert.equal(snapshot.answers.competition_clear, 5);
+assert.equal(snapshot.result.scores.overall, 60);
+assert.equal(snapshot.result.type, '충장로/동명동 카페 상권 메시지 불일치형');
+assert.deepEqual(snapshot.result.priority, { key: 'local', name: '상권 적합성', score: 58 });
+assert.equal(snapshot.recommendations.channelFocus, '입구, 외관, 동선');
+assert(snapshot.recommendations.kpis.includes('입구 유입 체감'));
+assert(!JSON.stringify(snapshot).includes('저장 범위에서 제외할 합성 이름'));
+assert(!Object.hasOwn(snapshot, 'aiReport'));
+console.log('PASS: synthetic app handoff fields, reverse-scored answer, result and minimized data.');

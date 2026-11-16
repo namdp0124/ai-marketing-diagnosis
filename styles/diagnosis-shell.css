@@ -87,6 +87,47 @@ h1 { font-size: clamp(28px, 2.5vw, 40px); letter-spacing: -.045em; line-height: 
 .result-summary { font-size: 17px; line-height: 1.7; color: #eef3eb; }
 .result-label, .scorebox .small { font-size: 14px; color: #d5ece6; }
 .scorebox { min-width: 90px; background: transparent; border: 0; }
+.report-ai-cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 20px;
+  padding: 22px;
+  border: 1px solid #beded5;
+  border-radius: 8px;
+  background: #e6f8f3;
+}
+.report-ai-cta h3, .report-app-handoff h3 { font-size: 20px; line-height: 1.4; }
+.report-ai-cta p { margin-top: 6px; color: var(--ink); }
+.report-ai-feedback { grid-column: 1 / -1; }
+.report-ai-feedback:has(.ai-status:empty) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.report-ai-feedback .ai-status { margin-top: 0; }
+.report-ai-feedback .ai-status:empty { display: block; }
+.report-ai-result-link {
+  display: none;
+  align-items: center;
+  min-height: 44px;
+  color: var(--accent-dark);
+  font-weight: 650;
+  text-underline-offset: 4px;
+}
+.result-wrap:has(#aiOutput:not(:empty)) .report-ai-result-link { display: inline-flex; }
+#stepResult, #aiReport { scroll-margin-block-start: 24px; }
+.report-app-handoff {
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.report-app-handoff h3 { font-size: 18px; }
+.report-app-handoff p { margin-top: 6px; color: var(--muted); }
+.report-app-handoff details { margin-top: 4px; font-size: 15px; }
+.report-app-handoff summary { padding-block: 9px; color: var(--accent-dark); cursor: pointer; }
 .report-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
 .report-card { padding: 28px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
 .report-title { font-size: 21px; font-weight: 650; margin-bottom: 16px; }
@@ -142,6 +183,8 @@ h1 { font-size: clamp(28px, 2.5vw, 40px); letter-spacing: -.045em; line-height: 
   .preview { padding: 16px; }
   .preview-list { grid-template-columns: minmax(0, 1fr); }
   .result-hero { padding: 22px; }
+  .report-ai-cta { grid-template-columns: minmax(0, 1fr); padding: 18px; }
+  .report-app-handoff { padding: 16px; }
   .result-type { font-size: 25px; }
   .scorebox { text-align: left; }
   .ai-readable { font-size: 16px; }
@@ -151,6 +194,7 @@ h1 { font-size: clamp(28px, 2.5vw, 40px); letter-spacing: -.045em; line-height: 
 }
 @media print {
   .diagnosis-header, .diagnosis-skip { display: none !important; }
+  .report-ai-cta, .report-app-handoff { display: none; }
   .app, .stage { display: block; }
   .ai-readable { max-width: none; }
   .ai-section-title { break-after: avoid; }

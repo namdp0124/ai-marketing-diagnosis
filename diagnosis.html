@@ -888,7 +888,7 @@
             <div id="localQuestions" class="question-list"></div>
           </div>
 
-          <div id="stepResult" class="step-page hidden">
+          <div id="stepResult" class="step-page hidden" tabindex="-1">
             <div class="step-head">
               <div>
                 <h2 class="step-title">5. 예지 실행 리포트</h2>
@@ -897,6 +897,17 @@
 
             </div>
             <div class="result-wrap">
+              <section class="report-ai-cta" aria-labelledby="reportAiTitle">
+                <div>
+                  <h3 id="reportAiTitle">AI 실행안 생성</h3>
+                  <p>우리 가게에 맞는 홍보 문구와 실행 일정을 만들어 보세요.</p>
+                </div>
+                <button id="aiGenerateBtn" type="button" class="btn blue" aria-controls="aiReport">AI 실행안 생성하기</button>
+                <div class="report-ai-feedback">
+                  <div id="aiStatus" role="status" aria-live="polite" class="ai-status"></div>
+                  <a class="report-ai-result-link" href="#aiReport">AI 실행안 보기 ↓</a>
+                </div>
+              </section>
               <div class="result-hero">
                 <div>
                   <div class="result-label">예지 진단 유형</div>
@@ -909,6 +920,14 @@
                   <div id="resultScore" class="big">0</div>
                 </div>
               </div>
+              <section class="report-app-handoff" aria-labelledby="reportHandoffTitle">
+                <h3 id="reportHandoffTitle">앱에서 이어하기</h3>
+                <p>앱 연동 준비 중</p>
+                <details>
+                  <summary>연동 시 저장할 정보</summary>
+                  <p>앱 연동이 시작되면 동의 후 매장 기본 정보, 진단 답변·점수, 추천 실행 방향을 이어받을 수 있어요. AI 실행안은 별도로 동의한 경우에만 저장할 예정이에요.</p>
+                </details>
+              </section>
               <div class="report-actions">
                 <label class="report-output-mode" for="reportExportMode">
                   출력 범위
@@ -949,11 +968,8 @@
                   <h3 class="report-title">상권 데이터 참고</h3>
                   <div id="marketResultBox" class="report-body">소상공인365 데이터를 불러오면 동일 업종 밀도와 주요 업종 분포가 여기에 반영됩니다.</div>
                 </div>
-                <div class="report-card full">
+                <div id="aiReport" class="report-card full" tabindex="-1">
                   <h3 class="report-title">맞춤 실행안</h3>
-                  <div class="report-body">소개 문구, 리뷰 답글과 7일 실행표를 만듭니다.</div>
-                  <button id="aiGenerateBtn" type="button" class="btn blue" style="margin-top:12px">AI 실행안 생성</button>
-                  <div id="aiStatus" role="status" aria-live="polite" class="ai-status"></div>
                   <div id="aiOutput" class="ai-output"></div>
                 </div>
               </div>
@@ -1627,7 +1643,11 @@
       renderProgress();
       renderResult();
       renderPreview();
-      window.scrollTo({top:0, behavior:"smooth"});
+      if(steps[currentStep].id === "stepResult"){
+        document.getElementById("stepResult").scrollIntoView({ block:"start" });
+      } else {
+        window.scrollTo({top:0, behavior:"smooth"});
+      }
     }
 
     function renderAll(){
