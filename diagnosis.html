@@ -897,15 +897,14 @@
 
             </div>
             <div class="result-wrap">
-              <section class="report-ai-cta" aria-labelledby="reportAiTitle">
-                <div>
+              <section id="reportAiCta" class="report-ai-cta" aria-labelledby="reportAiTitle" data-ai-state="idle">
+                <div id="aiStatus" role="status" aria-live="polite" aria-atomic="true" class="ai-status">
                   <h3 id="reportAiTitle">AI 실행안 생성</h3>
-                  <p>우리 가게에 맞는 홍보 문구와 실행 일정을 만들어 보세요.</p>
+                  <p id="reportAiDescription">우리 가게에 맞는 홍보 문구와 실행 일정을 만들어 보세요.</p>
                 </div>
                 <button id="aiGenerateBtn" type="button" class="btn blue" aria-controls="aiReport">AI 실행안 생성하기</button>
-                <div class="report-ai-feedback">
-                  <div id="aiStatus" role="status" aria-live="polite" class="ai-status"></div>
-                  <a class="report-ai-result-link" href="#aiReport">AI 실행안 보기 ↓</a>
+                <div id="reportAiFeedback" class="report-ai-feedback" hidden>
+                  <a class="report-ai-result-link" href="#aiReport">실행안 바로 보기 ↓</a>
                 </div>
               </section>
               <div class="result-hero">
@@ -970,7 +969,8 @@
                 </div>
                 <div id="aiReport" class="report-card full" tabindex="-1">
                   <h3 class="report-title">맞춤 실행안</h3>
-                  <div id="aiOutput" class="ai-output"></div>
+                  <div id="aiOutput" class="ai-output" hidden></div>
+                  <div id="aiReadable" class="ai-readable" aria-label="AI 실행안"></div>
                 </div>
               </div>
             </div>
@@ -1022,6 +1022,8 @@
     const scaleLabels = ["약함","부족","보통","좋음","강함"];
     let currentStep = 0;
     let currentDiagnosis = null;
+    let aiRequest = null;
+    let aiReportRevision = 0;
     let marketData = null;
     let marketFetchState = "idle";
     let marketErrorMessage = "";
@@ -1659,11 +1661,35 @@
       markAiResultStale();
     }
 
+    function setAiState(state, message = ""){
+      const titles = {
+        idle: "AI 실행안 생성",
+        loading: "예지가 실행안을 만들고 있어요!",
+        success: "예지가 실행안을 완성했어요!",
+        error: "AI 실행안 생성"
+      };
+      const generating = state === "loading";
+      const button = document.getElementById("aiGenerateBtn");
+      document.getElementById("reportAiCta").dataset.aiState = state;
+      document.getElementById("reportAiTitle").textContent = titles[state];
+      document.getElementById("reportAiDescription").textContent = message;
+      document.getElementById("reportAiDescription").hidden = !message;
+      document.getElementById("reportAiFeedback").hidden = state !== "success";
+      button.disabled = generating;
+      button.textContent = generating ? "생성 중..." : "AI 실행안 생성하기";
+    }
+
+    function clearAiReport(){
+      aiReportRevision++;
+      document.getElementById("aiOutput").textContent = "";
+      document.getElementById("aiReadable").textContent = "";
+    }
+
     function markAiResultStale(){
-      const status = document.getElementById("aiStatus");
-      const output = document.getElementById("aiOutput");
-      if(status && status.dataset.loading !== "true") status.textContent = "";
-      if(output) output.textContent = "";
+      aiRequest?.abort();
+      aiRequest = null;
+      clearAiReport();
+      setAiState("idle", "우리 가게에 맞는 홍보 문구와 실행 일정을 만들어 보세요.");
     }
 
     function getReportExportMode(){
@@ -1894,41 +1920,54 @@
     }
 
     async function generateAiDiagnosis(){
-      renderResult();
-      const button = document.getElementById("aiGenerateBtn");
-      const status = document.getElementById("aiStatus");
-      const output = document.getElementById("aiOutput");
+      if(aiRequest) return;
+      clearAiReport();
       if(window.location.protocol === "file:"){
-        status.textContent = "AI 실행안을 만들려면 홈페이지에서 진단을 열어 주세요.";
+        setAiState("error", "AI 실행안을 만들려면 홈페이지에서 진단을 열어 주세요.");
         return;
       }
 
-      const payload = currentDiagnosis;
-      button.disabled = true;
-      status.dataset.loading = "true";
-      status.textContent = "맞춤 실행안을 만들고 있습니다.";
-      output.textContent = "";
+      renderResult();
+      const request = new AbortController();
+      aiRequest = request;
+      setAiState("loading", "조금만 기다려주세요.");
 
       try {
         const response = await fetch("/api/diagnose", {
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify(payload)
+          body:JSON.stringify(currentDiagnosis),
+          signal:request.signal
         });
         const data = await response.json().catch(() => ({}));
+        if(aiRequest !== request) return;
         if(!response.ok) throw new Error(data.error || "AI 리포트 생성에 실패했습니다.");
+        if(typeof data.result !== "string" || !data.result.trim()){
+          throw new Error("AI 응답이 비어 있습니다.");
+        }
+        const { renderAiReport } = await import("/scripts/diagnosis-presentation.mjs");
+        if(aiRequest !== request) return;
         const warning = data.incomplete
           ? "\n\n[안내] AI 응답이 길어 일부가 잘렸을 수 있습니다. 다시 생성하거나 Vercel 환경변수 OPENAI_MAX_OUTPUT_TOKENS 값을 더 크게 설정해 주세요."
           : "";
-        output.textContent = (data.result || "AI 응답이 비어 있습니다.") + warning;
-        status.textContent = data.incomplete
-          ? `${payload.profile.region} 기준 리포트가 생성됐지만 일부가 길이 제한에 걸렸을 수 있습니다.`
-          : `${payload.profile.region} 기준 예지 AI 리포트가 생성되었습니다.`;
+        const report = renderAiReport(data.result + warning);
+        const displayed = () => report.getClientRects().length && getComputedStyle(report).visibility === "visible";
+        if(steps[currentStep].id === "stepResult" && !displayed()){
+          throw new Error("AI 실행안을 표시하지 못했습니다. 다시 생성해 주세요.");
+        }
+        const revision = aiReportRevision;
+        setAiState("success", data.incomplete ? "응답 길이 제한으로 일부 내용이 잘렸을 수 있습니다." : "");
+        requestAnimationFrame(() => {
+          if(revision !== aiReportRevision || !displayed()) return;
+          const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+          document.getElementById("aiReport").scrollIntoView({ block:"start", behavior:reducedMotion ? "auto" : "smooth" });
+        });
       } catch (error) {
-        status.textContent = error.message || "AI 리포트 요청 중 문제가 발생했습니다.";
+        if(aiRequest !== request) return;
+        clearAiReport();
+        setAiState("error", error.message || "AI 리포트 요청 중 문제가 발생했습니다.");
       } finally {
-        delete status.dataset.loading;
-        button.disabled = false;
+        if(aiRequest === request) aiRequest = null;
       }
     }
 

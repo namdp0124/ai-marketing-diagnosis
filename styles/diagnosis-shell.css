@@ -100,25 +100,19 @@ h1 { font-size: clamp(28px, 2.5vw, 40px); letter-spacing: -.045em; line-height: 
 .report-ai-cta h3, .report-app-handoff h3 { font-size: 20px; line-height: 1.4; }
 .report-ai-cta p { margin-top: 6px; color: var(--ink); }
 .report-ai-feedback { grid-column: 1 / -1; }
-.report-ai-feedback:has(.ai-status:empty) {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-}
-.report-ai-feedback .ai-status { margin-top: 0; }
-.report-ai-feedback .ai-status:empty { display: block; }
+.report-ai-cta .ai-status { margin-top: 0; }
 .report-ai-result-link {
-  display: none;
+  display: inline-flex;
   align-items: center;
   min-height: 44px;
   color: var(--accent-dark);
   font-weight: 650;
   text-underline-offset: 4px;
 }
-.result-wrap:has(#aiOutput:not(:empty)) .report-ai-result-link { display: inline-flex; }
 #stepResult, #aiReport { scroll-margin-block-start: 24px; }
+@media screen {
+  #aiReport:has(.ai-readable:not(:empty)) { min-block-size: calc(100svh - 24px); }
+}
 .report-app-handoff {
   padding: 18px 20px;
   border: 1px solid var(--line);

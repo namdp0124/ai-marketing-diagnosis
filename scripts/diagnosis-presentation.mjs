@@ -1,18 +1,14 @@
 // Presentation only. The original text remains the source for every export.
 const raw = document.getElementById('aiOutput');
-const report = document.createElement('div');
-report.className = 'ai-readable';
-report.setAttribute('aria-label', 'AI 실행안');
-raw.after(report);
-raw.hidden = true;
+const report = document.getElementById('aiReadable');
 const headings = new Set([
   '예지의 냉정한 판단', '이 상권에서 먹히는 각도', '오늘 바로 바꿀 3가지',
   '복사해서 쓸 문구', '7일 실행표', '이번 주에 볼 숫자', '버릴 선택지'
 ]);
 
-function renderReport() {
+export function renderAiReport(text) {
   const fragment = document.createDocumentFragment();
-  for (const line of raw.textContent.match(/[^\n]*\n|[^\n]+$/g) || []) {
+  for (const line of text.match(/[^\n]*\n|[^\n]+$/g) || []) {
     const title = line.trim().replace(/^#{1,6}\s+/, '').replace(/^\*\*(.*?)\*\*$/, '$1').replace(/:$/, '');
     const element = document.createElement(headings.has(title) ? 'h4' : 'div');
     element.className = headings.has(title) ? 'ai-section-title' : 'ai-line';
@@ -22,9 +18,12 @@ function renderReport() {
     fragment.append(element);
   }
   report.replaceChildren(fragment);
+  if (!report.childElementCount || report.textContent !== text) {
+    throw new Error('AI 실행안을 표시하지 못했습니다. 다시 생성해 주세요.');
+  }
+  raw.textContent = text;
+  return report;
 }
-new MutationObserver(renderReport).observe(raw, { childList: true, characterData: true, subtree: true });
-renderReport();
 
 function updateAccessibility() {
   document.querySelectorAll('.step-tab').forEach(button => {
